@@ -1,11 +1,13 @@
 # ruff: noqa: E501
 from datetime import date, datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models.appointment import Appointment
 from app.models.client import Client
 from app.models.client_vehicle import ClientVehicle
@@ -19,6 +21,7 @@ from app.models.notification import (
     ServiceReminderStatus,
 )
 from app.models.vehicle import Vehicle
+from app.models.work_order import WorkOrder
 from app.schemas.notification import (
     CustomerNotificationResponse,
     NotificationPreferenceResponse,
@@ -34,19 +37,16 @@ def _enum_value(value) -> str:
 
 
 def local_now() -> datetime:
-    return datetime.now().astimezone()
+    return datetime.now(ZoneInfo(get_settings().workshop_timezone))
 
 
 def appointment_datetime(
     appointment: Appointment,
 ) -> datetime:
-    now = local_now()
-
     return datetime.combine(
         appointment.appointment_date,
         appointment.appointment_time,
-    ).replace(
-        tzinfo=now.tzinfo,
+        tzinfo=ZoneInfo(get_settings().workshop_timezone),
     )
 
 
@@ -229,13 +229,61 @@ def enabled_channels(
     return channels
 
 
+def max_notifications_enabled(db: Session, client_id: UUID) -> bool:
+    return db.scalar(
+        select(ClientNotificationPreference.id).where(
+            ClientNotificationPreference.client_id == client_id,
+            ClientNotificationPreference.deleted_at.is_(None),
+            ClientNotificationPreference.max_enabled.is_(True),
+            ClientNotificationPreference.max_user_id.is_not(None),
+        )
+    ) is not None
+
+
+def queue_work_order_ready_notification(db: Session, order: WorkOrder, now: datetime) -> None:
+    """Queue one message inside the locked transition to ready."""
+    if max_notifications_enabled(db, order.client_id):
+        db.add(
+            CustomerNotification(
+                client_id=order.client_id,
+                vehicle_id=order.vehicle_id,
+                work_order_id=order.id,
+                channel=NotificationChannel.MAX,
+                kind=NotificationKind.WORK_ORDER_READY,
+                status=NotificationStatus.PREPARED,
+                message_text=(
+                    f"Ваш автомобиль готов к выдаче. Заказ-наряд №{order.work_order_number}."
+                ),
+                scheduled_for=now,
+            )
+        )
+
+
+def cancel_prepared_work_order_ready_notification(db: Session, order: WorkOrder) -> None:
+    items = db.scalars(
+        select(CustomerNotification)
+        .where(
+            CustomerNotification.work_order_id == order.id,
+            CustomerNotification.kind == NotificationKind.WORK_ORDER_READY,
+            CustomerNotification.status == NotificationStatus.PREPARED,
+            CustomerNotification.deleted_at.is_(None),
+        )
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    for item in items:
+        item.status = NotificationStatus.CANCELLED
+        item.error_message = None
+
+
 def cancel_prepared_appointment_notifications(
     db: Session,
     appointment_id: UUID,
 ) -> int:
     items = list(
         db.scalars(
-            select(CustomerNotification).where(
+            select(CustomerNotification)
+            .where(
                 CustomerNotification.appointment_id == appointment_id,
                 CustomerNotification.status == NotificationStatus.PREPARED,
                 CustomerNotification.kind.in_(
@@ -246,6 +294,8 @@ def cancel_prepared_appointment_notifications(
                 ),
                 CustomerNotification.deleted_at.is_(None),
             )
+            .with_for_update()
+            .execution_options(populate_existing=True)
         ).all()
     )
 
@@ -393,6 +443,7 @@ def notification_response(
         if item.appointment_id
         else None
     )
+    order = db.get(WorkOrder, item.work_order_id) if item.work_order_id else None
 
     return CustomerNotificationResponse(
         id=item.id,
@@ -400,6 +451,7 @@ def notification_response(
         client_name=(client.full_name if client is not None else None),
         vehicle_number=(vehicle.vehicle_number if vehicle is not None else None),
         appointment_number=(appointment.appointment_number if appointment is not None else None),
+        work_order_number=order.work_order_number if order is not None else None,
         channel=item.channel,
         kind=item.kind,
         status=item.status,
@@ -664,7 +716,8 @@ def prepare_due_service_reminders(
 
     reminders = list(
         db.scalars(
-            select(ServiceReminder).where(
+            select(ServiceReminder)
+            .where(
                 ServiceReminder.status == ServiceReminderStatus.PLANNED,
                 ServiceReminder.deleted_at.is_(None),
                 or_(
@@ -672,6 +725,8 @@ def prepare_due_service_reminders(
                     ServiceReminder.due_mileage.is_not(None),
                 ),
             )
+            .order_by(ServiceReminder.id)
+            .with_for_update(skip_locked=True)
         ).all()
     )
 
@@ -739,7 +794,7 @@ def cancel_service_reminder(
         select(ServiceReminder).where(
             ServiceReminder.id == reminder_id,
             ServiceReminder.deleted_at.is_(None),
-        )
+        ).with_for_update()
     )
 
     if reminder is None:

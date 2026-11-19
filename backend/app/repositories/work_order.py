@@ -10,13 +10,16 @@ from app.models.work_order import WorkOrder, WorkOrderStatus
 def get_work_order_by_number(
     db: Session,
     work_order_number: int,
+    *,
+    for_update: bool = False,
 ) -> WorkOrder | None:
-    return db.scalar(
-        select(WorkOrder).where(
-            WorkOrder.work_order_number == work_order_number,
-            WorkOrder.deleted_at.is_(None),
-        )
+    query = select(WorkOrder).where(
+        WorkOrder.work_order_number == work_order_number,
+        WorkOrder.deleted_at.is_(None),
     )
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    return db.scalar(query)
 
 
 def get_work_order_by_appointment_id(

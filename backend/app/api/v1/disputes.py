@@ -210,7 +210,7 @@ def open_dispute_photo(
     db: DbSession,
     _current_user: StaffUser,
 ) -> FileResponse:
-    path, photo = get_dispute_photo_file(
+    path, content_type = get_dispute_photo_file(
         db,
         work_order_number=work_order_number,
         dispute_number=dispute_number,
@@ -219,7 +219,8 @@ def open_dispute_photo(
 
     return FileResponse(
         path=path,
-        media_type=photo.content_type,
+        media_type=content_type,
+        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"},
     )
 
 

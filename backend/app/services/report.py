@@ -1,11 +1,15 @@
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
+from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy import Date, cast, func, select
 from sqlalchemy.orm import Session, aliased
+from sqlalchemy.sql import ColumnElement
 
+from app.core.config import get_settings
 from app.models.appointment import Appointment
 from app.models.client import Client
 from app.models.employee import Employee
@@ -38,6 +42,7 @@ from app.services.payment import (
     calculate_paid_amount,
     calculate_repair_total,
 )
+from app.services.work_item import calculate_earning
 
 _MONEY = Decimal("0.01")
 _HUNDRED = Decimal("100")
@@ -61,10 +66,11 @@ def money(
 def normalize_period(
     date_from: date | None,
     date_to: date | None,
+    *,
+    today: date | None = None,
 ) -> tuple[date, date]:
-    today = date.today()
-
     if date_from is None and date_to is None:
+        today = today or date.today()
         return today, today
 
     if date_from is None:
@@ -93,9 +99,27 @@ def calculate_employee_amount(
 ) -> tuple[Decimal, Decimal]:
     share_base = money(work_price * share_percent / _HUNDRED)
 
-    earning = money(share_base * rate_percent / _HUNDRED)
+    earning = calculate_earning(
+        price=work_price,
+        share_percent=share_percent,
+        rate_percent=rate_percent,
+    )
 
     return share_base, earning
+
+
+def completed_work_period(
+    date_from: date | None,
+    date_to: date | None,
+) -> tuple[date, date, ColumnElement[bool]]:
+    workshop_timezone = get_settings().workshop_timezone
+    start_date, end_date = normalize_period(
+        date_from,
+        date_to,
+        today=datetime.now(ZoneInfo(workshop_timezone)).date(),
+    )
+    local_completion_date = cast(func.timezone(workshop_timezone, WorkItem.completed_at), Date)
+    return start_date, end_date, local_completion_date.between(start_date, end_date)
 
 
 def vehicle_name(
@@ -559,10 +583,7 @@ def get_work_report(
     date_from: date | None,
     date_to: date | None,
 ) -> WorkReportResponse:
-    start_date, end_date = normalize_period(
-        date_from,
-        date_to,
-    )
+    start_date, end_date, completed_in_period = completed_work_period(date_from, date_to)
 
     rows = db.execute(
         select(
@@ -576,16 +597,10 @@ def get_work_report(
         .where(
             WorkItem.deleted_at.is_(None),
             WorkOrder.deleted_at.is_(None),
-            cast(
-                WorkItem.created_at,
-                Date,
-            ).between(
-                start_date,
-                end_date,
-            ),
+            completed_in_period,
         )
         .order_by(
-            WorkItem.created_at.asc(),
+            WorkItem.completed_at.asc(),
             WorkItem.work_item_number.asc(),
         )
     ).all()
@@ -596,7 +611,7 @@ def get_work_report(
             work_item_number=(work_item.work_item_number),
             name=work_item.name,
             price=money(work_item.price),
-            recorded_at=(work_item.created_at),
+            recorded_at=work_item.completed_at,
         )
         for work_item, work_order_number in rows
     ]
@@ -620,13 +635,11 @@ def get_employee_accrual_report(
     *,
     date_from: date | None,
     date_to: date | None,
+    employee_id: UUID | None = None,
 ) -> EmployeeAccrualReportResponse:
-    start_date, end_date = normalize_period(
-        date_from,
-        date_to,
-    )
+    start_date, end_date, completed_in_period = completed_work_period(date_from, date_to)
 
-    rows = db.execute(
+    query = (
         select(
             WorkItemAssignment,
             WorkItem,
@@ -648,22 +661,18 @@ def get_employee_accrual_report(
         .where(
             WorkItemAssignment.deleted_at.is_(None),
             WorkItem.deleted_at.is_(None),
-            Employee.deleted_at.is_(None),
             WorkOrder.deleted_at.is_(None),
-            cast(
-                WorkItem.created_at,
-                Date,
-            ).between(
-                start_date,
-                end_date,
-            ),
+            completed_in_period,
         )
         .order_by(
             Employee.employee_number.asc(),
-            WorkItem.created_at.asc(),
+            WorkItem.completed_at.asc(),
             WorkItem.work_item_number.asc(),
         )
-    ).all()
+    )
+    if employee_id is not None:
+        query = query.where(WorkItemAssignment.employee_id == employee_id)
+    rows = db.execute(query).all()
 
     grouped: dict[
         int,
@@ -707,7 +716,7 @@ def get_employee_accrual_report(
                 share_base=share_base,
                 rate_percent_snapshot=money(assignment.rate_percent_snapshot),
                 earning_amount=earning,
-                recorded_at=(work_item.created_at),
+                recorded_at=work_item.completed_at,
             )
         )
 

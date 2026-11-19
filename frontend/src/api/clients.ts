@@ -8,6 +8,7 @@ import {
 } from "./sync";
 
 import {
+  getCachedApiResponse,
   listPendingSyncOperations,
 } from "../offline/offlineStore";
 
@@ -139,15 +140,13 @@ function matchesSearch(
     return true;
   }
 
-  return [
-    client.full_name,
-    client.phone_primary,
-    client.phone_secondary ?? "",
-  ].some(
-    (item) =>
-      item
-        .toLocaleLowerCase()
-        .includes(value),
+  const phones = [client.phone_primary, client.phone_secondary ?? ""];
+  const digits = value.replace(/\D/g, "");
+
+  return (
+    [client.full_name, ...phones].some((item) => item.toLocaleLowerCase().includes(value)) ||
+    (client.client_number > 0 && /^\d+$/.test(value) && client.client_number === Number(value)) ||
+    (digits.length >= 4 && phones.some((phone) => phone.replace(/\D/g, "").includes(digits)))
   );
 }
 
@@ -162,6 +161,8 @@ export async function listClients(
       offset: "0",
     });
 
+  const unfilteredPath = `/api/v1/clients?${params.toString()}`;
+
   if (search.trim()) {
     params.set(
       "search",
@@ -169,10 +170,21 @@ export async function listClients(
     );
   }
 
-  const response =
-    await apiRequest<ClientListResponse>(
-      `/api/v1/clients?${params.toString()}`,
-    );
+  const response = await apiRequest<ClientListResponse>(
+    `/api/v1/clients?${params.toString()}`,
+  ).catch(async (error: unknown) => {
+    if (!search.trim() || !(error instanceof ApiError) || (error.status !== 0 && error.status < 500)) {
+      throw error;
+    }
+
+    const cached = await getCachedApiResponse<ClientListResponse>(unfilteredPath);
+    if (!cached.found) {
+      throw error;
+    }
+
+    const items = cached.payload.items.filter((client) => matchesSearch(client, search));
+    return { ...cached.payload, items, total: items.length };
+  });
 
   const operations =
     await listPendingSyncOperations();

@@ -54,6 +54,7 @@ def create_recommended_work(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_recommendations_editable(order)
@@ -81,6 +82,7 @@ def update_recommended_work(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_recommendations_editable(order)
@@ -109,6 +111,7 @@ def delete_recommended_work(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_recommendations_editable(order)

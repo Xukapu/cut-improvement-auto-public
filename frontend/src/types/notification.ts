@@ -6,7 +6,9 @@ export type NotificationChannel =
 export type NotificationKind =
   | "appointment_confirmation"
   | "appointment_reminder"
-  | "service_reminder";
+  | "appointment_cancellation"
+  | "service_reminder"
+  | "work_order_ready";
 
 
 export type NotificationStatus =
@@ -76,6 +78,8 @@ export type CustomerNotification = {
   appointment_number:
     | number
     | null;
+
+  work_order_number: number | null;
 
   channel: NotificationChannel;
   kind: NotificationKind;

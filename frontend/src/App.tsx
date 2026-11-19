@@ -102,6 +102,15 @@ type Section =
   | "settings";
 
 
+type RecordSection = "clients" | "vehicles" | "workorders";
+
+type SectionView = {
+  section: Section;
+  recordNumber: number | null;
+  navigationId: number;
+};
+
+
 const sectionTitles:
   Record<
     Section,
@@ -148,12 +157,12 @@ function App() {
     CurrentUser | null
   >(null);
 
-  const [
-    section,
-    setSection,
-  ] = useState<Section>(
-    "dashboard",
-  );
+  const [{ section, recordNumber, navigationId }, setSectionView] =
+    useState<SectionView>({
+      section: "dashboard",
+      recordNumber: null,
+      navigationId: 0,
+    });
 
   const [
     dashboard,
@@ -431,6 +440,31 @@ function App() {
         "anonymous",
       );
     }
+  }
+
+
+  function setSection(section: Section) {
+    setSectionView((view) => {
+      if (view.section === section && view.recordNumber === null) {
+        return view;
+      }
+
+      return { section, recordNumber: null, navigationId: view.navigationId + 1 };
+    });
+  }
+
+
+  function openRecord(section: RecordSection, recordNumber: number) {
+    setSectionView((view) => ({
+      section,
+      recordNumber,
+      navigationId: view.navigationId + 1,
+    }));
+  }
+
+
+  function openWorkOrder(workOrderNumber: number) {
+    openRecord("workorders", workOrderNumber);
   }
 
 
@@ -935,32 +969,38 @@ function App() {
           "clients" &&
           currentUser && (
           <ClientsPage
+            key={navigationId}
             currentUser={
               currentUser
             }
+            initialClientNumber={recordNumber}
+            onOpenWorkOrder={openWorkOrder}
           />
         )}
 
 
         {section ===
           "vehicles" && (
-          <VehiclesPage />
+          <VehiclesPage
+            key={navigationId}
+            initialVehicleNumber={recordNumber}
+            onOpenWorkOrder={openWorkOrder}
+          />
         )}
 
 
-        {section ===
-          "appointments" && (
-          <AppointmentsPage />
-        )}
+        {section === "appointments" && currentUser && <AppointmentsPage currentUser={currentUser} />}
 
 
         {section ===
           "workorders" &&
           currentUser && (
           <WorkOrdersPage
+            key={navigationId}
             currentUser={
               currentUser
             }
+            initialWorkOrderNumber={recordNumber}
           />
         )}
 
@@ -1009,23 +1049,13 @@ function App() {
                 false,
               );
             }}
-            onOpenClients={() => {
-              setShowGlobalSearch(
-                false,
-              );
-
-              setSection(
-                "clients",
-              );
+            onOpenClient={(clientNumber) => {
+              setShowGlobalSearch(false);
+              openRecord("clients", clientNumber);
             }}
-            onOpenVehicles={() => {
-              setShowGlobalSearch(
-                false,
-              );
-
-              setSection(
-                "vehicles",
-              );
+            onOpenVehicle={(vehicleNumber) => {
+              setShowGlobalSearch(false);
+              openRecord("vehicles", vehicleNumber);
             }}
           />
         )}

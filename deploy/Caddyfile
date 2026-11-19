@@ -1,0 +1,10 @@
+{$CUT_SITE} {
+	@dispute_photo {
+		method POST
+		path_regexp ^/api/v1/work-orders/[0-9]+/disputes/[0-9]+/photos/?$
+	}
+	request_body @dispute_photo {
+		max_size 12MB
+	}
+	reverse_proxy app:8000
+}

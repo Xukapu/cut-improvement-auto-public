@@ -9,6 +9,7 @@ import {
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -16,6 +17,7 @@ import {
   getClientReport,
   getEmployeeAccrualReport,
   getFinanceReport,
+  getOwnAccrualReport,
   getWorkReport,
 } from "../api/reports";
 import {
@@ -201,6 +203,8 @@ export function ReportsPage({
   ] = useState<ReportTab>(
     "clients",
   );
+  const isOwnAccrualReport = !isOwner && tab === "accruals";
+  const reportRequestId = useRef(0);
 
 
   const [
@@ -260,10 +264,13 @@ export function ReportsPage({
 
   const loadReports =
     useCallback(async () => {
+      const requestId = ++reportRequestId.current;
+      const isCurrent = () => requestId === reportRequestId.current;
       if (
         !dateFrom ||
         !dateTo
       ) {
+        setLoading(false);
         return;
       }
 
@@ -273,12 +280,14 @@ export function ReportsPage({
         setError(
           "Дата начала периода не может быть позже даты окончания.",
         );
+        setLoading(false);
 
         return;
       }
 
       setLoading(true);
       setError("");
+      setAccruals(null);
 
       const period = {
         dateFrom,
@@ -286,6 +295,12 @@ export function ReportsPage({
       };
 
       try {
+        if (isOwnAccrualReport) {
+          const ownAccruals = await getOwnAccrualReport(period);
+          if (isCurrent()) setAccruals(ownAccruals);
+          return;
+        }
+
         const [
           clientData,
           workData,
@@ -298,6 +313,8 @@ export function ReportsPage({
             period,
           ),
         ]);
+
+        if (!isCurrent()) return;
 
         setClients(
           clientData,
@@ -322,6 +339,8 @@ export function ReportsPage({
             ),
           ]);
 
+          if (!isCurrent()) return;
+
           setFinance(
             financeData,
           );
@@ -334,18 +353,21 @@ export function ReportsPage({
           setAccruals(null);
         }
       } catch (loadError) {
+        if (!isCurrent()) return;
+
         setError(
-          errorText(
-            loadError,
-          ),
+          isOwnAccrualReport && loadError instanceof ApiError && loadError.status === 403
+            ? "Учётная запись не связана с карточкой сотрудника. Обратитесь к владельцу СТО."
+            : errorText(loadError),
         );
       } finally {
-        setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
     }, [
       dateFrom,
       dateTo,
       isOwner,
+      isOwnAccrualReport,
     ]);
 
 
@@ -579,32 +601,18 @@ export function ReportsPage({
           </button>
         )}
 
-        {isOwner && (
-          <button
-            className={
-              tab === "accruals"
-                ? "reports-tab reports-tab-active"
-                : "reports-tab"
-            }
-            onClick={() => {
-              setTab(
-                "accruals",
-              );
-            }}
-            type="button"
-          >
-            <UserCheck
-              size={17}
-            />
-            Начисления
-          </button>
-        )}
+        <button
+          className={tab === "accruals" ? "reports-tab reports-tab-active" : "reports-tab"}
+          onClick={() => { setTab("accruals"); }}
+          type="button"
+        >
+          <UserCheck size={17} />
+          {isOwner ? "Начисления" : "Мои начисления"}
+        </button>
       </div>
 
 
-      {loading &&
-      !clients &&
-      !works && (
+      {loading && (tab === "accruals" ? !accruals : !clients && !works) && (
         <div className="reports-loading">
           Загружаем отчёты...
         </div>
@@ -1285,23 +1293,15 @@ export function ReportsPage({
 
 
       {tab === "accruals" &&
-        isOwner &&
         accruals && (
         <section className="reports-content">
           <div className="reports-metrics reports-metrics-two">
-            <article className="report-metric-card">
-              <span>
-                Сотрудников в отчёте
-              </span>
-
-              <strong>
-                {
-                  accruals
-                    .employees
-                    .length
-                }
-              </strong>
-            </article>
+            {isOwner && (
+              <article className="report-metric-card">
+                <span>Сотрудников в отчёте</span>
+                <strong>{accruals.employees.length}</strong>
+              </article>
+            )}
 
             <article className="report-metric-card report-metric-primary">
               <span>

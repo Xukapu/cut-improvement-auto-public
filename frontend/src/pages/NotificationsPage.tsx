@@ -89,7 +89,7 @@ const statusLabels:
       "Отправлено",
 
     failed:
-      "Ошибка",
+      "Требует проверки",
 
     cancelled:
       "Отменено",
@@ -107,8 +107,14 @@ const kindLabels:
     appointment_reminder:
       "Напоминание о записи",
 
+    appointment_cancellation:
+      "Отмена записи",
+
     service_reminder:
       "Сервисное напоминание",
+
+    work_order_ready:
+      "Автомобиль готов к выдаче",
   };
 
 
@@ -1260,11 +1266,8 @@ export function NotificationsPage({
           </strong>
 
           <span>
-            Сейчас система формирует
-            очередь сообщений.
-            Подключение реальной отправки
-            SMS и MAX будет отдельным
-            этапом.
+            «Отправлено» означает, что MAX принял сообщение.
+            Уведомления со статусом «Требует проверки» нужно сверить вручную.
           </span>
         </div>
       </div>
@@ -1405,7 +1408,7 @@ export function NotificationsPage({
 
             <div>
               <span>
-                Ошибки
+                Требуют проверки
               </span>
 
               <strong>
@@ -1460,7 +1463,7 @@ export function NotificationsPage({
                 </option>
 
                 <option value="failed">
-                  Ошибка
+                  Требует проверки
                 </option>
 
                 <option value="cancelled">
@@ -1498,8 +1501,16 @@ export function NotificationsPage({
                   Напоминание о записи
                 </option>
 
+                <option value="appointment_cancellation">
+                  Отмена записи
+                </option>
+
                 <option value="service_reminder">
                   Сервисное напоминание
+                </option>
+
+                <option value="work_order_ready">
+                  Автомобиль готов к выдаче
                 </option>
               </select>
             </label>
@@ -1634,6 +1645,10 @@ export function NotificationsPage({
                               .appointment_number
                           }
                         </span>
+                      )}
+
+                      {item.work_order_number != null && (
+                        <span>Заказ-наряд №{item.work_order_number}</span>
                       )}
 
                       {item.vehicle_number !==

@@ -41,6 +41,7 @@ class CustomerNotificationResponse(BaseModel):
     client_name: str | None
     vehicle_number: int | None
     appointment_number: int | None
+    work_order_number: int | None = None
 
     channel: NotificationChannel
     kind: NotificationKind

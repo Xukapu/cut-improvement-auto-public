@@ -1,11 +1,11 @@
+from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.models.work_item import WorkItem, WorkItemAssignment
-from app.models.work_order import WorkOrderStatus
+from app.models.work_order import WorkOrder, WorkOrderStatus
 from app.repositories.employee import (
     get_current_employee_rate,
     get_employee_by_number,
@@ -41,7 +41,7 @@ def calculate_earning(
     )
 
 
-def ensure_order_editable(order) -> None:
+def ensure_order_editable(order: WorkOrder) -> None:
     if order.status == WorkOrderStatus.ISSUED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -62,6 +62,7 @@ def build_public_work_item_response(
         work_item_number=work_item.work_item_number,
         name=work_item.name,
         price=work_item.price,
+        completed_at=work_item.completed_at,
         assignments=[
             WorkAssignmentPublicResponse(
                 employee_number=employee.employee_number,
@@ -107,6 +108,7 @@ def build_financial_work_item_response(
         work_item_number=work_item.work_item_number,
         name=work_item.name,
         price=work_item.price,
+        completed_at=work_item.completed_at,
         assignments=response_assignments,
         total_employee_earnings=total_earnings.quantize(
             _MONEY,
@@ -115,13 +117,19 @@ def build_financial_work_item_response(
     )
 
 
-def add_assignments(
+def save_assignments(
     db: Session,
     *,
     work_item: WorkItem,
     payload: WorkItemWrite,
+    existing_assignments: dict[int, WorkItemAssignment],
 ) -> None:
     for item in payload.assignments:
+        existing_assignment = existing_assignments.pop(item.employee_number, None)
+        if existing_assignment is not None:
+            existing_assignment.share_percent = item.share_percent
+            continue
+
         employee = get_employee_by_number(
             db,
             item.employee_number,
@@ -159,6 +167,9 @@ def add_assignments(
 
         db.add(assignment)
 
+    for removed_assignment in existing_assignments.values():
+        db.delete(removed_assignment)
+
 
 def create_work_item(
     db: Session,
@@ -169,9 +180,15 @@ def create_work_item(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_order_editable(order)
+    if order.status == WorkOrderStatus.READY:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Верните заказ-наряд в работу, чтобы добавить новую работу.",
+        )
 
     work_item = WorkItem(
         work_order_id=order.id,
@@ -182,10 +199,11 @@ def create_work_item(
     db.add(work_item)
     db.flush()
 
-    add_assignments(
+    save_assignments(
         db,
         work_item=work_item,
         payload=payload,
+        existing_assignments={},
     )
 
     db.commit()
@@ -207,30 +225,29 @@ def update_work_item(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_order_editable(order)
 
-    work_item = get_work_item_by_number(
-        db,
-        work_item_number,
-    )
-
-    if work_item is None or work_item.work_order_id != order.id:
+    work_item = require_work_item(db, order, work_item_number)
+    if work_item.completed_at is not None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Работа в этом заказ-наряде не найдена.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Завершённую работу нельзя редактировать.",
         )
 
     work_item.name = payload.name
     work_item.price = payload.price
 
-    db.execute(delete(WorkItemAssignment).where(WorkItemAssignment.work_item_id == work_item.id))
-
-    add_assignments(
+    save_assignments(
         db,
         work_item=work_item,
         payload=payload,
+        existing_assignments={
+            employee.employee_number: assignment
+            for assignment, employee in list_assignments_for_work(db, work_item.id)
+        },
     )
 
     db.commit()
@@ -240,6 +257,40 @@ def update_work_item(
         db,
         work_item,
     )
+
+
+def require_work_item(db: Session, order: WorkOrder, work_item_number: int) -> WorkItem:
+    work_item = get_work_item_by_number(db, work_item_number)
+    if work_item is None or work_item.work_order_id != order.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Работа в этом заказ-наряде не найдена.",
+        )
+    return work_item
+
+
+def complete_work_item(
+    db: Session,
+    *,
+    work_order_number: int,
+    work_item_number: int,
+) -> WorkItemPublicResponse:
+    order = require_work_order(db, work_order_number, for_update=True)
+    work_item = require_work_item(db, order, work_item_number)
+
+    if work_item.completed_at is None:
+        ensure_order_editable(order)
+        assignments = list_assignments_for_work(db, work_item.id)
+        if sum(assignment.share_percent for assignment, _employee in assignments) != 100:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Перед завершением работы распределите 100% долей между исполнителями.",
+            )
+        work_item.completed_at = datetime.now(UTC)
+        db.commit()
+        db.refresh(work_item)
+
+    return build_public_work_item_response(db, work_item)
 
 
 def get_order_work_items(

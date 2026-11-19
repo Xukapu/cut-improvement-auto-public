@@ -88,6 +88,7 @@ export type WorkAssignmentFinancial =
 
 export type WorkItemPublic = {
   work_item_number: number;
+  completed_at: string | null;
 
   name: string;
 
@@ -102,6 +103,7 @@ export type WorkItemPublic = {
 
 export type WorkItemFinancial = {
   work_item_number: number;
+  completed_at: string | null;
 
   name: string;
 

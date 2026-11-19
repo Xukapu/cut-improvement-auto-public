@@ -22,6 +22,7 @@ import type {
   WorkItemFinancialListResponse,
   WorkItemListResponse,
   WorkItemPayload,
+  WorkItemPublic,
   WorkOrder,
   WorkOrderCreatePayload,
   WorkOrderListResponse,
@@ -34,6 +35,8 @@ type ListWorkOrderOptions = {
   status?: WorkOrderStatus;
   clientNumber?: number;
   vehicleNumber?: number;
+  limit?: number;
+  offset?: number;
 };
 
 
@@ -43,8 +46,8 @@ export function listWorkOrders(
 ): Promise<WorkOrderListResponse> {
   const params =
     new URLSearchParams({
-      limit: "100",
-      offset: "0",
+      limit: String(options.limit ?? 100),
+      offset: String(options.offset ?? 0),
     });
 
   if (options.status) {
@@ -209,6 +212,17 @@ export function updateWork(
         payload,
       ),
     },
+  );
+}
+
+
+export function completeWork(
+  workOrderNumber: number,
+  workItemNumber: number,
+): Promise<WorkItemPublic> {
+  return apiRequest<WorkItemPublic>(
+    `/api/v1/work-orders/${workOrderNumber}/works/${workItemNumber}/complete`,
+    { method: "PATCH" },
   );
 }
 

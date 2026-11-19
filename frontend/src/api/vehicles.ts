@@ -12,6 +12,7 @@ import {
 } from "./sync";
 
 import {
+  getCachedApiResponse,
   listPendingSyncOperations,
 } from "../offline/offlineStore";
 
@@ -35,9 +36,12 @@ import type {
 } from "../types/vehicle";
 
 
+type VehicleOwner = Pick<Client, "id" | "client_number" | "full_name" | "sync_pending">;
+
+
 function pendingVehicleFromOperation(
   operation: SyncQueuedOperation,
-  clients: Client[],
+  clients: VehicleOwner[],
 ): Vehicle {
   const payload =
     operation.payload;
@@ -125,11 +129,12 @@ function matchesSearch(
     return true;
   }
 
-  return [
+  return (/^\d+$/.test(value) && vehicle.vehicle_number > 0 && vehicle.vehicle_number === Number(value)) || [
     vehicle.license_plate,
     vehicle.vin ?? "",
     vehicle.brand,
     vehicle.model,
+    `${vehicle.brand} ${vehicle.model}`,
   ].some(
     (item) =>
       item
@@ -139,11 +144,11 @@ function matchesSearch(
 }
 
 
-export async function listVehicles(
-  search = "",
-  limit = 100,
+function vehicleListPath(
+  search: string,
+  limit: number,
   clientNumber?: number,
-): Promise<VehicleListResponse> {
+): string {
   const params =
     new URLSearchParams({
       limit: String(limit),
@@ -167,10 +172,39 @@ export async function listVehicles(
   }
 
 
-  const response =
-    await apiRequest<VehicleListResponse>(
-      `/api/v1/vehicles?${params.toString()}`,
-    );
+  return `/api/v1/vehicles?${params.toString()}`;
+}
+
+
+export async function listVehicles(
+  search = "",
+  limit = 100,
+  clientOrNumber?: VehicleOwner | number,
+): Promise<VehicleListResponse> {
+  const owner = typeof clientOrNumber === "object" ? clientOrNumber : undefined;
+  const clientNumber = typeof clientOrNumber === "number" ? clientOrNumber : owner?.client_number;
+  const empty = { items: [], total: 0, limit, offset: 0 };
+  const response = owner?.sync_pending
+    ? empty
+    : await apiRequest<VehicleListResponse>(vehicleListPath(search, limit, clientNumber))
+      .catch(async (error: unknown) => {
+        if (!owner || !(error instanceof ApiError) || (error.status !== 0 && error.status < 500)) {
+          throw error;
+        }
+
+        const ownerCache = await getCachedApiResponse<VehicleListResponse>(vehicleListPath("", limit, clientNumber));
+        const cached = ownerCache.found
+          ? ownerCache
+          : await getCachedApiResponse<VehicleListResponse>(vehicleListPath("", limit));
+        if (!cached.found) {
+          return empty;
+        }
+
+        const items = cached.payload.items.filter((vehicle) =>
+          vehicle.current_owner_client_number === clientNumber && matchesSearch(vehicle, search),
+        );
+        return { ...cached.payload, items, total: items.length };
+      });
 
 
   const operations =
@@ -180,7 +214,8 @@ export async function listVehicles(
     operations.filter(
       (operation) =>
         operation.kind ===
-        "vehicle.create",
+        "vehicle.create" &&
+        (!owner || operation.payload.owner_client_id === owner.id),
     );
 
 
@@ -191,11 +226,7 @@ export async function listVehicles(
   }
 
 
-  const clientData =
-    await listClients(
-      "",
-      100,
-    );
+  const clients = owner ? [owner] : (await listClients()).items;
 
 
   const knownIds =
@@ -219,7 +250,7 @@ export async function listVehicles(
         (operation) =>
           pendingVehicleFromOperation(
             operation,
-            clientData.items,
+            clients,
           ),
       )
       .filter(
@@ -231,7 +262,7 @@ export async function listVehicles(
       )
       .filter(
         (vehicle) =>
-          clientNumber ===
+          owner !== undefined || clientNumber ===
             undefined ||
           vehicle
             .current_owner_client_number ===
@@ -371,27 +402,6 @@ export async function createVehicle(
 
         full_name:
           payload.owner_client_name,
-
-        phone_primary: "",
-        phone_secondary: null,
-
-        source: "other",
-
-        referred_by_client_number:
-          null,
-
-        referred_by_client_name:
-          null,
-
-        internal_mark: false,
-
-        notes: null,
-
-        created_at:
-          new Date().toISOString(),
-
-        updated_at:
-          new Date().toISOString(),
 
         sync_pending:
           payload

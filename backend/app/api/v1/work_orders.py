@@ -150,6 +150,7 @@ def edit_work_order(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     return update_work_order(
@@ -173,6 +174,7 @@ def edit_work_order_status(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     return change_work_order_status(

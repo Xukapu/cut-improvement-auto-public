@@ -9,12 +9,14 @@ from sqlalchemy import select
 def main() -> None:
     """Создаёт первого владельца системы."""
 
-    full_name = "Андрей Кузлякин"
+    full_name = input("ФИО владельца: ").strip()
+    if not full_name or len(full_name) > 200:
+        raise SystemExit("Введите имя длиной от 1 до 200 символов.")
 
     print("Создание первого владельца ЦУТ Improvement Auto")
     print(f"ФИО: {full_name}")
 
-    login_input = input("Введите логин для Андрея: ")
+    login_input = input("Введите логин владельца: ")
     login = normalize_login(login_input)
 
     password = getpass("Введите пароль: ")

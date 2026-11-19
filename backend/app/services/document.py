@@ -5,6 +5,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from html import escape
 from io import BytesIO
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from reportlab.lib import colors
@@ -27,11 +28,13 @@ from reportlab.platypus import (
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models.client import Client
 from app.models.part import Part
 from app.models.recommended_work import RecommendedWork
 from app.models.vehicle import Vehicle
 from app.models.work_item import WorkItem
+from app.models.work_order import WorkOrder, WorkOrderStatus
 from app.schemas.document import (
     DocumentClient,
     DocumentPart,
@@ -175,11 +178,44 @@ def get_work_order_document_data(
     db: Session,
     work_order_number: int,
 ) -> WorkOrderDocumentData:
-    order = require_work_order(
-        db,
-        work_order_number,
-    )
+    order = require_work_order(db, work_order_number)
+    return _collect_document_data(db, order)
 
+
+def capture_completion_act(db: Session, order: WorkOrder) -> WorkOrderDocumentData:
+    data = _collect_document_data(db, order)
+    order.completion_act_data = data.model_dump(mode="json")
+    return data
+
+
+def get_completion_act_data(
+    db: Session, work_order_number: int
+) -> tuple[WorkOrderDocumentData, bool]:
+    order = require_work_order(db, work_order_number)
+
+    if order.status == WorkOrderStatus.READY:
+        return _collect_document_data(db, order), True
+
+    if order.status != WorkOrderStatus.ISSUED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Акт доступен после завершения ремонта.",
+        )
+
+    if order.completion_act_data is not None:
+        return WorkOrderDocumentData.model_validate(order.completion_act_data), False
+
+    # Orders issued before this change have no saved copy. Capture their current data once.
+    order = require_work_order(db, work_order_number, for_update=True)
+    if order.completion_act_data is None:
+        capture_completion_act(db, order)
+
+    data = WorkOrderDocumentData.model_validate(order.completion_act_data)
+    db.commit()
+    return data, False
+
+
+def _collect_document_data(db: Session, order: WorkOrder) -> WorkOrderDocumentData:
     client = db.get(
         Client,
         order.client_id,
@@ -257,13 +293,14 @@ def get_work_order_document_data(
 
     debt_amount = money(repair_total - paid_amount)
 
-    document_source_date = order.issued_at or order.ready_at or order.started_at or order.created_at
+    document_timestamp = order.issued_at or order.ready_at or order.started_at or order.created_at
+    document_date = document_timestamp.astimezone(ZoneInfo(get_settings().workshop_timezone))
 
     status_value = enum_value(order.status)
 
     return WorkOrderDocumentData(
         work_order_number=order.work_order_number,
-        document_date=format_date(document_source_date),
+        document_date=format_date(document_date),
         status=STATUS_LABELS.get(
             status_value,
             status_value,
@@ -1342,6 +1379,8 @@ def build_work_order_pdf(
 
 def build_completion_act_pdf(
     data: WorkOrderDocumentData,
+    *,
+    preliminary: bool = False,
 ) -> bytes:
     styles = _styles()
 
@@ -1372,6 +1411,9 @@ def build_completion_act_pdf(
     )
 
     story = []
+
+    if preliminary:
+        story.append(_p("ПРЕДВАРИТЕЛЬНЫЙ АКТ", styles["heading"]))
 
     story.extend(
         _document_header(

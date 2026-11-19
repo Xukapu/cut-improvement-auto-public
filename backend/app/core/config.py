@@ -1,8 +1,9 @@
 
 from functools import lru_cache
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     ] = "development"
 
     debug: bool = False
+    workshop_timezone: str = "UTC"
 
     host: str = "127.0.0.1"
     port: int = 8000
@@ -36,6 +38,8 @@ class Settings(BaseSettings):
     db_password: SecretStr
 
     max_bot_token: SecretStr | None = None
+    max_dispatch_mode: Literal["disabled", "test", "all"] = "disabled"
+    max_test_client_number: int | None = Field(default=None, ge=1)
 
     session_cookie_name: str = "cut_session"
 
@@ -63,6 +67,16 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @field_validator("workshop_timezone")
+    @classmethod
+    def validate_workshop_timezone(cls, value: str) -> str:
+        zone = value.strip()
+        try:
+            ZoneInfo(zone)
+        except (ValueError, ZoneInfoNotFoundError) as exc:
+            raise ValueError("WORKSHOP_TIMEZONE должен быть часовым поясом IANA.") from exc
+        return zone
 
     @property
     def is_production(self) -> bool:

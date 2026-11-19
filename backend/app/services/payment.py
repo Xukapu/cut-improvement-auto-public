@@ -178,6 +178,7 @@ def create_payment(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     _, _, repair_total = calculate_repair_total(
@@ -220,6 +221,7 @@ def update_payment(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     payment = require_order_payment(
@@ -265,6 +267,7 @@ def delete_payment(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     payment = require_order_payment(

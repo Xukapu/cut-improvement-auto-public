@@ -70,3 +70,10 @@ export function getEmployeeAccrualReport(
     `/api/v1/reports/employee-accruals?${reportQuery(period)}`,
   );
 }
+
+
+export function getOwnAccrualReport(period: ReportPeriod): Promise<EmployeeAccrualReport> {
+  return apiRequest<EmployeeAccrualReport>(
+    `/api/v1/reports/employee-accruals/me?${reportQuery(period)}`,
+  );
+}

@@ -1,0 +1,70 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ci-app-only
+      ENVIRONMENT: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pytest
+      - name: Verify packaged frontend releases
+        run: |
+          for manifest in deploy/frontend_releases/*-manifest.json; do
+            version="${manifest##*/}"
+            python scripts/cut_frontend_releases.py verify "${version%-manifest.json}"
+          done
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  postgres:
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ci-app-only
+      POSTGRES_PASSWORD: ci-admin-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start PostgreSQL and apply migrations
+        run: |
+          docker compose up -d --wait db
+          docker compose run --build --rm app alembic upgrade head
+      - name: Check application readiness and frontend response
+        run: |
+          docker compose up -d --wait app
+          docker compose exec -T app python - <<'PY'
+          from urllib.request import urlopen
+
+          with urlopen('http://127.0.0.1:8000/ready') as response:
+              assert response.status == 200
+          with urlopen('http://127.0.0.1:8000/') as response:
+              assert response.headers.get_content_type() == 'text/html'
+          PY
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs db app
+      - name: Remove temporary services and volumes
+        if: always()
+        run: docker compose down --volumes

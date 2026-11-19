@@ -154,6 +154,7 @@ def edit_appointment(
     appointment = require_appointment(
         db,
         appointment_number,
+        for_update=True,
     )
 
     return update_appointment(
@@ -165,12 +166,12 @@ def edit_appointment(
 @router.post(
     "/{appointment_number}/cancel",
     response_model=AppointmentResponse,
-    summary="Cancel appointment",
+    summary="Отменить запись",
 )
 def cancel_appointment_route(
     appointment_number: AppointmentNumber,
     db: DbSession,
     _current_user: OwnerOrTechAdmin,
 ) -> AppointmentResponse:
-    appointment = require_appointment(db, appointment_number)
+    appointment = require_appointment(db, appointment_number, for_update=True)
     return cancel_appointment(db, appointment=appointment)

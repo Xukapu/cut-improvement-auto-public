@@ -1,9 +1,11 @@
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from app.models.appointment import Appointment
+from app.models.work_item import WorkItem
 from app.models.work_order import WorkOrder, WorkOrderStatus
 from app.repositories.appointment import get_appointment_by_number
 from app.repositories.client import get_client_by_number
@@ -20,6 +22,10 @@ from app.schemas.work_order import (
     WorkOrderCreate,
     WorkOrderResponse,
     WorkOrderUpdate,
+)
+from app.services.notification import (
+    cancel_prepared_work_order_ready_notification,
+    queue_work_order_ready_notification,
 )
 
 _ALLOWED_STATUS_TRANSITIONS: dict[
@@ -265,6 +271,22 @@ def change_work_order_status(
             detail=(f"Недопустимый переход статуса: {order.status.value} -> {new_status.value}."),
         )
 
+    if new_status in {WorkOrderStatus.READY, WorkOrderStatus.ISSUED}:
+        has_unfinished_work = db.scalar(
+            select(
+                exists().where(
+                    WorkItem.work_order_id == order.id,
+                    WorkItem.deleted_at.is_(None),
+                    WorkItem.completed_at.is_(None),
+                )
+            )
+        )
+        if has_unfinished_work:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Отметьте все работы в заказ-наряде выполненными.",
+            )
+
     now = datetime.now(UTC)
 
     if new_status == WorkOrderStatus.IN_PROGRESS:
@@ -280,7 +302,18 @@ def change_work_order_status(
     elif new_status == WorkOrderStatus.ISSUED:
         order.issued_at = now
 
+    previous_status = order.status
     order.status = new_status
+
+    if new_status == WorkOrderStatus.READY:
+        queue_work_order_ready_notification(db, order, now)
+    elif previous_status == WorkOrderStatus.READY:
+        cancel_prepared_work_order_ready_notification(db, order)
+
+    if new_status == WorkOrderStatus.ISSUED:
+        from app.services.document import capture_completion_act
+
+        capture_completion_act(db, order)
 
     db.commit()
     db.refresh(order)
@@ -294,10 +327,13 @@ def change_work_order_status(
 def require_work_order(
     db: Session,
     work_order_number: int,
+    *,
+    for_update: bool = False,
 ) -> WorkOrder:
     order = get_work_order_by_number(
         db,
         work_order_number,
+        for_update=for_update,
     )
 
     if order is None:

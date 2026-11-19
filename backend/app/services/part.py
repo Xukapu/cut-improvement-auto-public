@@ -57,6 +57,7 @@ def create_part(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_order_parts_editable(order)
@@ -87,6 +88,7 @@ def update_part(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_order_parts_editable(order)
@@ -118,6 +120,7 @@ def delete_part(
     order = require_work_order(
         db,
         work_order_number,
+        for_update=True,
     )
 
     ensure_order_parts_editable(order)

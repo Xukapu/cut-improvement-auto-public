@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { FormEvent } from "react";
@@ -17,6 +18,7 @@ import { MaxLinkButton } from "../components/MaxLinkButton";
 import {
   archiveClient,
   createClient,
+  getClient,
   listArchivedClients,
   listClients,
   restoreClient,
@@ -26,6 +28,7 @@ import {
 import {
   listVehicles,
 } from "../api/vehicles";
+import { RepairHistory } from "../components/RepairHistory";
 import type {
   CurrentUser,
 } from "../types/auth";
@@ -41,6 +44,8 @@ import type {
 
 type Props = {
   currentUser: CurrentUser;
+  initialClientNumber: number | null;
+  onOpenWorkOrder: (workOrderNumber: number) => void;
 };
 
 type FormState = {
@@ -95,6 +100,8 @@ function clientNumberLabel(
 
 export function ClientsPage({
   currentUser,
+  initialClientNumber,
+  onOpenWorkOrder,
 }: Props) {
   const [
     items,
@@ -109,6 +116,10 @@ export function ClientsPage({
   ] = useState<
     Client | ArchivedClient | null
   >(null);
+
+  const [requestedClient, setRequestedClient] = useState(initialClientNumber);
+  const [cardError, setCardError] = useState("");
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const [
     clientVehicles,
@@ -196,6 +207,43 @@ export function ClientsPage({
       ? null
       : selected?.client_number ??
         null;
+
+
+  useEffect(() => {
+    if (requestedClient === null) {
+      return;
+    }
+
+    let active = true;
+
+    getClient(requestedClient)
+      .then((client) => {
+        if (active) {
+          setSelected((current) => current ?? client);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setCardError(getError(error));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setRequestedClient(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [requestedClient]);
+
+
+  useEffect(() => {
+    if (initialClientNumber !== null && selectedClientNumber === initialClientNumber) {
+      detailHeadingRef.current?.focus();
+    }
+  }, [initialClientNumber, selectedClientNumber]);
 
 
   // ----------------------------------------------------------
@@ -408,6 +456,8 @@ export function ClientsPage({
   });
 
   function openCreate() {
+    setRequestedClient(null);
+    setCardError("");
     setEditing(null);
     setForm(emptyForm);
 
@@ -653,6 +703,8 @@ export function ClientsPage({
             className=
               "secondary-button"
             onClick={() => {
+              setRequestedClient(null);
+              setCardError("");
               setArchived(
                 (value) =>
                   !value,
@@ -773,6 +825,8 @@ export function ClientsPage({
                     }
                     key={client.id}
                     onClick={() => {
+                      setRequestedClient(null);
+                      setCardError("");
                       setClientVehicles(
                         [],
                       );
@@ -846,13 +900,10 @@ export function ClientsPage({
               />
 
               <strong>
-                Выбери клиента
+                {requestedClient !== null ? "Открываем клиента…" : "Выбери клиента"}
               </strong>
 
-              <span>
-                Здесь откроется его
-                карточка.
-              </span>
+              {cardError && <span role="alert">{cardError}</span>}
             </div>
           ) : (
             <>
@@ -869,7 +920,7 @@ export function ClientsPage({
                     )}
                   </span>
 
-                  <h2>
+                  <h2 ref={detailHeadingRef} tabIndex={-1}>
                     {
                       selected
                         .full_name
@@ -1016,6 +1067,14 @@ export function ClientsPage({
                 </div>
               </dl>
 
+              {selectedClientNumber !== null && selectedClientNumber > 0 && (
+                <RepairHistory
+                  key={selectedClientNumber}
+                  scope="client"
+                  recordNumber={selectedClientNumber}
+                  onOpenWorkOrder={onOpenWorkOrder}
+                />
+              )}
 
               <div
                 className=

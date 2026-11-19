@@ -1,5 +1,8 @@
 from decimal import Decimal
+from unittest.mock import Mock
 
+import pytest
+from app.models.work_order import WorkOrder, WorkOrderStatus
 from app.schemas.document import (
     DocumentClient,
     DocumentPayment,
@@ -11,7 +14,9 @@ from app.services.document import (
     build_work_order_pdf,
     format_date,
     format_money,
+    get_completion_act_data,
 )
+from fastapi import HTTPException
 
 
 def sample_data() -> WorkOrderDocumentData:
@@ -82,3 +87,31 @@ def test_completion_act_pdf() -> None:
     assert content.startswith(b"%PDF-")
 
     assert len(content) > 1000
+
+
+
+@pytest.mark.parametrize("order_status", [WorkOrderStatus.PLANNED, WorkOrderStatus.IN_PROGRESS])
+def test_rejects_act_before_repair_ready(monkeypatch, order_status: WorkOrderStatus) -> None:
+    order = WorkOrder(status=order_status)
+    monkeypatch.setattr("app.services.document.require_work_order", lambda *args: order)
+
+    with pytest.raises(HTTPException) as error:
+        get_completion_act_data(Mock(), 2)
+
+    assert error.value.status_code == 409
+
+
+def test_returns_issued_act_from_snapshot(monkeypatch) -> None:
+    data = sample_data()
+    order = WorkOrder(
+        status=WorkOrderStatus.ISSUED,
+        completion_act_data=data.model_dump(mode="json"),
+    )
+    monkeypatch.setattr("app.services.document.require_work_order", lambda *args: order)
+    db = Mock()
+
+    stored, preliminary = get_completion_act_data(db, data.work_order_number)
+
+    assert stored == data
+    assert not preliminary
+    assert not db.mock_calls

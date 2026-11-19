@@ -1,0 +1,74 @@
+services:
+  db:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-cut_improvement_auto_prod}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DB_USER: ${DB_USER:-cut_app}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./deploy/postgres-init.sh:/docker-entrypoint-initdb.d/10-cut-app.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [database]
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DB_NAME=${DB_NAME:-cut_improvement_auto_prod}
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-cut_app}
+      - DB_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-["127.0.0.1","localhost"]}
+      - WORKSHOP_TIMEZONE=${WORKSHOP_TIMEZONE:-UTC}
+      - MAX_DISPATCH_MODE=${MAX_DISPATCH_MODE:-disabled}
+      - MAX_TEST_CLIENT_NUMBER
+      - MAX_BOT_TOKEN
+      # The application port is private to the Compose networks.
+      - FORWARDED_ALLOW_IPS=*
+    volumes:
+      - app-data:/srv/sto/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/ready', timeout=6)"]
+      interval: 10s
+      timeout: 7s
+      retries: 6
+    networks: [web, database]
+
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      CUT_SITE: ${CUT_SITE:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [web]
+
+volumes:
+  db-data:
+  app-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  web:
+  database:
+    internal: true

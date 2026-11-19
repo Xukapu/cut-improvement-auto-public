@@ -88,9 +88,9 @@ export function WorkOrderPrintPreview({
   void recommended;
   void paymentSummary;
 
-  const actAvailable =
-    order.status === "ready" ||
-    order.status === "issued";
+  const preliminaryAct = order.status === "ready";
+  const actAvailable = preliminaryAct || order.status === "issued";
+  const actLabel = preliminaryAct ? "Предварительный акт" : "Акт выполненных работ";
 
   const [
     documentType,
@@ -111,7 +111,7 @@ export function WorkOrderPrintPreview({
   const documentName =
     documentType === "order"
       ? `Заказ-наряд №${order.work_order_number}`
-      : `Акт выполненных работ №${order.work_order_number}`;
+      : `${actLabel} №${order.work_order_number}`;
 
 
   return (
@@ -210,12 +210,12 @@ export function WorkOrderPrintPreview({
             }}
             title={
               actAvailable
-                ? "Акт выполненных работ"
-                : "Акт станет доступен, когда ремонт будет готов или выдан"
+                ? actLabel
+                : "Акт станет доступен после завершения ремонта"
             }
             type="button"
           >
-            Акт выполненных работ
+            {actLabel}
           </button>
 
           {!actAvailable && (

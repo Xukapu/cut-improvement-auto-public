@@ -27,8 +27,8 @@ import type {
 
 type Props = {
   onClose: () => void;
-  onOpenClients: () => void;
-  onOpenVehicles: () => void;
+  onOpenClient: (clientNumber: number) => void;
+  onOpenVehicle: (vehicleNumber: number) => void;
 };
 
 
@@ -71,8 +71,8 @@ function errorText(
 
 export function GlobalSearchModal({
   onClose,
-  onOpenClients,
-  onOpenVehicles,
+  onOpenClient,
+  onOpenVehicle,
 }: Props) {
   const inputRef =
     useRef<HTMLInputElement>(
@@ -392,9 +392,7 @@ export function GlobalSearchModal({
                           client
                             .client_number
                         }
-                        onClick={
-                          onOpenClients
-                        }
+                        onClick={() => onOpenClient(client.client_number)}
                         type="button"
                       >
                         <div className="global-search-result-icon">
@@ -460,7 +458,7 @@ export function GlobalSearchModal({
 
                         <div className="global-search-result-open">
                           <span>
-                            Клиенты
+                            Открыть
                           </span>
 
                           <ChevronRight
@@ -505,9 +503,7 @@ export function GlobalSearchModal({
                           vehicle
                             .vehicle_number
                         }
-                        onClick={
-                          onOpenVehicles
-                        }
+                        onClick={() => onOpenVehicle(vehicle.vehicle_number)}
                         type="button"
                       >
                         <div className="global-search-result-icon">
@@ -575,7 +571,7 @@ export function GlobalSearchModal({
 
                         <div className="global-search-result-open">
                           <span>
-                            Автомобили
+                            Открыть
                           </span>
 
                           <ChevronRight
