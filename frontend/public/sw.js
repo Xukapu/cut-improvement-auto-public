@@ -1,5 +1,5 @@
 const CACHE_NAME =
-  "cut-improvement-auto-shell-v0.2.0";
+  "cut-improvement-auto-shell-v0.2.1";
 
 const APP_SHELL = [
   "/",
@@ -85,8 +85,8 @@ self.addEventListener(
       url.pathname.startsWith(
         "/api/",
       ) ||
-      url.pathname ===
-        "/health"
+      url.pathname === "/health" ||
+      url.pathname === "/ready"
     ) {
       return;
     }

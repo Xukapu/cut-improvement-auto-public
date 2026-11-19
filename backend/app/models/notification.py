@@ -31,6 +31,7 @@ class NotificationKind(StrEnum):
     APPOINTMENT_REMINDER = "appointment_reminder"
     APPOINTMENT_CANCELLATION = "appointment_cancellation"
     SERVICE_REMINDER = "service_reminder"
+    WORK_ORDER_READY = "work_order_ready"
 
 
 class NotificationStatus(StrEnum):
@@ -138,6 +139,12 @@ class CustomerNotification(
         index=True,
     )
 
+    work_order_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("work_orders.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     channel: Mapped[NotificationChannel] = mapped_column(
         SQLEnum(
             NotificationChannel,
@@ -205,7 +212,8 @@ class CustomerNotification(
             name="channel_valid",
         ),
         CheckConstraint(
-            "kind IN ('appointment_confirmation', 'appointment_reminder', 'appointment_cancellation', 'service_reminder')",
+            "kind IN ('appointment_confirmation', 'appointment_reminder', "
+            "'appointment_cancellation', 'service_reminder', 'work_order_ready')",
             name="kind_valid",
         ),
         CheckConstraint(

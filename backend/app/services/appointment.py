@@ -1,7 +1,13 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.appointment import Appointment
+from app.models.appointment import Appointment, AppointmentStatus
+from app.models.notification import (
+    CustomerNotification,
+    NotificationChannel,
+    NotificationKind,
+    NotificationStatus,
+)
 from app.repositories.appointment import (
     get_appointment_by_number,
     get_appointment_details,
@@ -15,6 +21,12 @@ from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentResponse,
     AppointmentUpdate,
+)
+from app.services.notification import (
+    appointment_datetime,
+    cancel_prepared_appointment_notifications,
+    local_now,
+    max_notifications_enabled,
 )
 
 
@@ -186,39 +198,28 @@ def cancel_appointment(
     *,
     appointment: Appointment,
 ) -> AppointmentResponse:
-    """Cancel appointment, preserve history and queue MAX notice."""
-    from app.models.appointment import AppointmentStatus
-    from app.models.notification import (
-        CustomerNotification,
-        NotificationChannel,
-        NotificationKind,
-        NotificationStatus,
-    )
-    from app.services.notification import (
-        cancel_prepared_appointment_notifications,
-        get_or_create_preferences,
-        local_now,
-        appointment_datetime,
-    )
+    """Отменить запись и поставить уведомление о её отмене в очередь."""
+    if appointment.status == AppointmentStatus.CANCELLED:
+        return get_appointment_response(db, appointment)
 
     if appointment.status != AppointmentStatus.SCHEDULED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Only scheduled appointments can be cancelled.",
+            detail="Отменить можно только запланированную запись.",
         )
 
     now = local_now()
     if appointment_datetime(appointment) <= now:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Past appointments cannot be cancelled.",
+            detail="Нельзя отменить прошедшую запись.",
         )
 
-    preferences = get_or_create_preferences(db, appointment.client_id)
+    notify = max_notifications_enabled(db, appointment.client_id)
     cancel_prepared_appointment_notifications(db, appointment.id)
     appointment.status = AppointmentStatus.CANCELLED
 
-    if preferences.max_enabled and preferences.max_user_id:
+    if notify:
         message = (
             "Ваша запись "
             "в ЦУТ Improvement Auto "
@@ -248,10 +249,13 @@ def cancel_appointment(
 def require_appointment(
     db: Session,
     appointment_number: int,
+    *,
+    for_update: bool = False,
 ) -> Appointment:
     appointment = get_appointment_by_number(
         db,
         appointment_number,
+        for_update=for_update,
     )
 
     if appointment is None:

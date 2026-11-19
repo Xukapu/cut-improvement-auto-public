@@ -10,10 +10,12 @@ def get_work_item_by_number(
     work_item_number: int,
 ) -> WorkItem | None:
     return db.scalar(
-        select(WorkItem).where(
+        select(WorkItem)
+        .where(
             WorkItem.work_item_number == work_item_number,
             WorkItem.deleted_at.is_(None),
         )
+        .execution_options(populate_existing=True)
     )
 
 

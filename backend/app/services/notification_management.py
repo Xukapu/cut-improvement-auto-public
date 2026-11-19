@@ -25,10 +25,12 @@ def require_prepared_notification(
     notification_id: UUID,
 ) -> CustomerNotification:
     item = db.scalar(
-        select(CustomerNotification).where(
+        select(CustomerNotification)
+        .where(
             CustomerNotification.id == notification_id,
             CustomerNotification.deleted_at.is_(None),
         )
+        .with_for_update()
     )
 
     if item is None:

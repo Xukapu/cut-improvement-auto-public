@@ -12,13 +12,16 @@ from app.models.vehicle import Vehicle
 def get_appointment_by_number(
     db: Session,
     appointment_number: int,
+    *,
+    for_update: bool = False,
 ) -> Appointment | None:
-    return db.scalar(
-        select(Appointment).where(
-            Appointment.appointment_number == appointment_number,
-            Appointment.deleted_at.is_(None),
-        )
+    statement = select(Appointment).where(
+        Appointment.appointment_number == appointment_number,
+        Appointment.deleted_at.is_(None),
     )
+    if for_update:
+        statement = statement.with_for_update().execution_options(populate_existing=True)
+    return db.scalar(statement)
 
 
 def list_appointments(

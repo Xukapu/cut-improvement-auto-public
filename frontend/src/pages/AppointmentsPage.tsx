@@ -9,7 +9,7 @@ import {
 import {
   useCallback,
   useEffect,
-  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -29,22 +29,22 @@ import {
 } from "../api/client";
 
 import {
+  getClient,
   listClients,
 } from "../api/clients";
 
 import {
+  getVehicle,
   listVehicles,
 } from "../api/vehicles";
-
-import {
-  listPendingSyncOperations,
-} from "../offline/offlineStore";
 
 import type {
   Appointment,
   AppointmentInput,
   AppointmentStatus,
 } from "../types/appointment";
+
+import type { CurrentUser } from "../types/auth";
 
 import type {
   Client,
@@ -62,9 +62,6 @@ import {
 
 
 type FormState = {
-  client_id: string;
-  vehicle_id: string;
-
   appointment_date: string;
   appointment_time: string;
 
@@ -113,11 +110,33 @@ function clientLabel(
 ): string {
   return client.sync_pending
     ? `${client.full_name} · ожидает синхронизации`
-    : `№${client.client_number} · ${client.full_name}`;
+    : `№${client.client_number} · ${client.full_name} · ${client.phone_primary}`;
 }
 
 
-export function AppointmentsPage() {
+type LookupResult<T> = { query: string; items: T[]; total: number; error?: string };
+
+const appointmentStatusLabels: Record<AppointmentStatus, string> = {
+  scheduled: "Запланирована",
+  no_show: "Не приехал",
+  cancelled: "Отменена",
+};
+
+function includeSelection<T extends { id: string }>(items: T[], selected: T | null): T[] {
+  return selected && !items.some((item) => item.id === selected.id)
+    ? [selected, ...items]
+    : items;
+}
+
+function lookupStatus<T>(result: LookupResult<T> | null, emptyMessage: string): string {
+  if (!result) return "Загрузка…";
+  if (result.error) return result.error;
+  if (!result.items.length) return emptyMessage;
+  return result.total > result.items.length ? "Уточните запрос, чтобы увидеть другие результаты." : "";
+}
+
+export function AppointmentsPage({ currentUser }: { currentUser: CurrentUser }) {
+  const canManage = currentUser.role === "owner" || currentUser.role === "tech_admin";
   const [
     date,
     setDate,
@@ -132,26 +151,15 @@ export function AppointmentsPage() {
     Appointment[]
   >([]);
 
-  const [
-    clients,
-    setClients,
-  ] = useState<
-    Client[]
-  >([]);
-
-  const [
-    vehicles,
-    setVehicles,
-  ] = useState<
-    Vehicle[]
-  >([]);
-
-  const [
-    pendingVehicleOwners,
-    setPendingVehicleOwners,
-  ] = useState<
-    Record<string, string>
-  >({});
+  const [clientSearch, setClientSearch] = useState("");
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [clientLookup, setClientLookup] = useState<LookupResult<Client> | null>(null);
+  const [vehicleLookup, setVehicleLookup] = useState<(LookupResult<Vehicle> & { ownerId: string }) | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [directoryRevision, setDirectoryRevision] = useState(0);
+  const scheduleRequest = useRef(0);
+  const formRequest = useRef(0);
 
   const [
     loading,
@@ -189,9 +197,6 @@ export function AppointmentsPage() {
     form,
     setForm,
   ] = useState<FormState>({
-    client_id: "",
-    vehicle_id: "",
-
     appointment_date:
       todayIso(),
 
@@ -206,90 +211,25 @@ export function AppointmentsPage() {
   });
 
 
-  const loadData =
-    useCallback(
-      async (
-        targetDate: string,
-      ) => {
-        const [
-          appointmentData,
-          clientData,
-          vehicleData,
-          operations,
-        ] = await Promise.all([
-          listAppointments({
-            date:
-              targetDate,
-          }),
-
-          listClients(
-            "",
-            100,
-          ),
-
-          listVehicles(
-            "",
-            100,
-          ),
-
-          listPendingSyncOperations(),
-        ]);
-
-
-        const ownerMap:
-          Record<string, string> =
-          {};
-
-
-        for (
-          const operation
-          of operations
-        ) {
-          if (
-            operation.kind !==
-            "vehicle.create"
-          ) {
-            continue;
-          }
-
-          const ownerId =
-            operation
-              .payload
-              .owner_client_id;
-
-          if (
-            typeof ownerId ===
-            "string"
-          ) {
-            ownerMap[
-              operation.entity_id
-            ] = ownerId;
-          }
-        }
-
-
-        setItems(
-          appointmentData.items,
-        );
-
-        setClients(
-          clientData.items,
-        );
-
-        setVehicles(
-          vehicleData.items,
-        );
-
-        setPendingVehicleOwners(
-          ownerMap,
-        );
-
+  const loadData = useCallback(async (targetDate: string) => {
+    const request = ++scheduleRequest.current;
+    try {
+      const data = await listAppointments({ date: targetDate });
+      if (request === scheduleRequest.current) {
+        setItems(data.items);
         setPageError("");
         setLoading(false);
-      },
-      [],
-    );
+      }
+    } catch (error) {
+      if (request === scheduleRequest.current) throw error;
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!canManage) return;
+    void listClients().catch(() => undefined);
+    void listVehicles().catch(() => undefined);
+  }, [canManage]);
 
   useEffect(() => {
     let active = true;
@@ -333,6 +273,7 @@ export function AppointmentsPage() {
 
   useEffect(() => {
     function handleSyncCompleted() {
+      setDirectoryRevision((revision) => revision + 1);
       void loadData(
         date,
       ).catch(
@@ -363,214 +304,114 @@ export function AppointmentsPage() {
   ]);
 
 
-  const selectedClient =
-    useMemo(
-      () =>
-        clients.find(
-          (client) =>
-            client.id ===
-            form.client_id,
-        ) ??
-        null,
-      [
-        clients,
-        form.client_id,
-      ],
-    );
+  useEffect(() => {
+    if (!canManage || !formOpen) return;
 
-
-  const availableVehicles =
-    useMemo(() => {
-      if (!selectedClient) {
-        return [];
-      }
-
-      return vehicles.filter(
-        (vehicle) => {
-          if (
-            vehicle.sync_pending
-          ) {
-            return (
-              pendingVehicleOwners[
-                vehicle.id
-              ] ===
-              selectedClient.id
-            );
+    let active = true;
+    const timer = window.setTimeout(() => {
+      void listClients(clientSearch)
+        .then((result) => {
+          if (active) setClientLookup({ ...result, query: clientSearch });
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setClientLookup({ query: clientSearch, items: [], total: 0, error: errorMessage(error) });
           }
+        });
+    }, clientSearch ? 250 : 0);
 
-          if (
-            selectedClient
-              .sync_pending
-          ) {
-            return false;
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [canManage, clientSearch, directoryRevision, formOpen]);
+
+  useEffect(() => {
+    if (!canManage || !formOpen || !selectedClient) return;
+
+    let active = true;
+    const ownerId = selectedClient.id;
+    const timer = window.setTimeout(() => {
+      void listVehicles(vehicleSearch, 100, selectedClient)
+        .then((result) => {
+          if (active) setVehicleLookup({ ...result, query: vehicleSearch, ownerId });
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setVehicleLookup({ query: vehicleSearch, ownerId, items: [], total: 0, error: errorMessage(error) });
           }
+        });
+    }, vehicleSearch ? 250 : 0);
 
-          return (
-            vehicle
-              .current_owner_client_number ===
-            selectedClient
-              .client_number
-          );
-        },
-      );
-    }, [
-      pendingVehicleOwners,
-      selectedClient,
-      vehicles,
-    ]);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [canManage, directoryRevision, formOpen, selectedClient, vehicleSearch]);
 
+  const clientResults = clientLookup?.query === clientSearch ? clientLookup : null;
+  const vehicleResults = vehicleLookup?.query === vehicleSearch && vehicleLookup.ownerId === selectedClient?.id
+    ? vehicleLookup
+    : null;
+  const clientOptions = includeSelection(clientResults?.items ?? [], selectedClient);
+  const vehicleOptions = includeSelection(vehicleResults?.items ?? [], selectedVehicle);
 
-  function vehiclesForClient(
-    client: Client,
-  ): Vehicle[] {
-    return vehicles.filter(
-      (vehicle) => {
-        if (
-          vehicle.sync_pending
-        ) {
-          return (
-            pendingVehicleOwners[
-              vehicle.id
-            ] ===
-            client.id
-          );
-        }
-
-        if (
-          client.sync_pending
-        ) {
-          return false;
-        }
-
-        return (
-          vehicle
-            .current_owner_client_number ===
-          client.client_number
-        );
-      },
-    );
+  function resetLookup() {
+    setClientSearch("");
+    setVehicleSearch("");
+    setClientLookup(null);
+    setVehicleLookup(null);
   }
-
 
   function openCreate() {
+    if (!canManage) return;
+    formRequest.current += 1;
     setFormError("");
     setEditing(null);
-
-    const firstClient =
-      clients.find(
-        (client) =>
-          vehiclesForClient(
-            client,
-          ).length > 0,
-      ) ??
-      clients[0] ??
-      null;
-
-    const firstVehicle =
-      firstClient
-        ? vehiclesForClient(
-            firstClient,
-          )[0] ??
-          null
-        : null;
-
-
+    setSelectedClient(null);
+    setSelectedVehicle(null);
+    resetLookup();
     setForm({
-      client_id:
-        firstClient?.id ??
-        "",
-
-      vehicle_id:
-        firstVehicle?.id ??
-        "",
-
-      appointment_date:
-        date,
-
-      appointment_time:
-        "09:00",
-
+      appointment_date: date,
+      appointment_time: "09:00",
       reason: "",
       comment: "",
-
-      status:
-        "scheduled",
+      status: "scheduled",
     });
-
     setFormOpen(true);
   }
 
+  async function openEdit(appointment: Appointment) {
+    if (!canManage || appointment.sync_pending) return;
 
-  function openEdit(
-    appointment:
-      Appointment,
-  ) {
-    if (
-      appointment.sync_pending
-    ) {
-      return;
-    }
+    const request = ++formRequest.current;
+    const [client, vehicle] = await Promise.allSettled([
+      getClient(appointment.client_number),
+      getVehicle(appointment.vehicle_number),
+    ]);
+    if (request !== formRequest.current) return;
+
+    const currentClient = client.status === "fulfilled" ? client.value : null;
+    const currentVehicle = vehicle.status === "fulfilled" ? vehicle.value : null;
 
     setFormError("");
-
-    const client =
-      clients.find(
-        (item) =>
-          !item.sync_pending &&
-          item.client_number ===
-            appointment
-              .client_number,
-      );
-
-    const vehicle =
-      vehicles.find(
-        (item) =>
-          !item.sync_pending &&
-          item.vehicle_number ===
-            appointment
-              .vehicle_number,
-      );
-
-
-    setEditing(
-      appointment,
+    setEditing(appointment);
+    setSelectedClient(currentClient);
+    setSelectedVehicle(
+      currentClient && currentClient.client_number === currentVehicle?.current_owner_client_number
+        ? currentVehicle
+        : null,
     );
-
+    resetLookup();
     setForm({
-      client_id:
-        client?.id ??
-        "",
-
-      vehicle_id:
-        vehicle?.id ??
-        "",
-
-      appointment_date:
-        appointment
-          .appointment_date,
-
-      appointment_time:
-        appointment
-          .appointment_time
-          .slice(
-            0,
-            5,
-          ),
-
-      reason:
-        appointment.reason,
-
-      comment:
-        appointment.comment ??
-        "",
-
-      status:
-        appointment.status,
+      appointment_date: appointment.appointment_date,
+      appointment_time: appointment.appointment_time.slice(0, 5),
+      reason: appointment.reason,
+      comment: appointment.comment ?? "",
+      status: appointment.status,
     });
-
     setFormOpen(true);
   }
-
 
   function validateForm():
     string | null {
@@ -581,13 +422,6 @@ export function AppointmentsPage() {
         "Выберите клиента."
       );
     }
-
-    const selectedVehicle =
-      availableVehicles.find(
-        (vehicle) =>
-          vehicle.id ===
-          form.vehicle_id,
-      );
 
     if (!selectedVehicle) {
       return (
@@ -630,13 +464,6 @@ export function AppointmentsPage() {
         "Клиент не выбран.",
       );
     }
-
-    const selectedVehicle =
-      availableVehicles.find(
-        (vehicle) =>
-          vehicle.id ===
-          form.vehicle_id,
-      );
 
     if (
       !selectedVehicle ||
@@ -683,6 +510,7 @@ export function AppointmentsPage() {
     event: FormEvent,
   ) {
     event.preventDefault();
+    if (!canManage) return;
 
     setFormError("");
 
@@ -697,20 +525,7 @@ export function AppointmentsPage() {
       return;
     }
 
-    if (!selectedClient) {
-      return;
-    }
-
-    const selectedVehicle =
-      availableVehicles.find(
-        (vehicle) =>
-          vehicle.id ===
-          form.vehicle_id,
-      );
-
-    if (!selectedVehicle) {
-      return;
-    }
+    if (!selectedClient || !selectedVehicle) return;
 
 
     setSaving(true);
@@ -775,27 +590,16 @@ export function AppointmentsPage() {
       }
 
 
-      const targetDate =
-        form.appointment_date;
+      const targetDate = form.appointment_date;
 
-      setDate(
-        targetDate,
-      );
-
-      await loadData(
-        targetDate,
-      );
-
-      setFormOpen(
-        false,
-      );
-
-      setEditing(
-        null,
-      );
-
+      setDate(targetDate);
+      setFormOpen(false);
+      setEditing(null);
       setFormError("");
-      setPageError("");
+
+      if (targetDate === date) {
+        await loadData(targetDate).catch((error: unknown) => setPageError(errorMessage(error)));
+      }
     } catch (error) {
       setFormError(
         errorMessage(
@@ -817,11 +621,7 @@ export function AppointmentsPage() {
     status:
       AppointmentStatus,
   ) {
-    if (
-      appointment.sync_pending
-    ) {
-      return;
-    }
+    if (!canManage || appointment.sync_pending) return;
 
     setPageError("");
 
@@ -872,7 +672,7 @@ export function AppointmentsPage() {
 
 
   async function cancelBooking(appointment: Appointment) {
-    if (appointment.sync_pending) return;
+    if (!canManage || appointment.sync_pending) return;
     if (!window.confirm("Отменить запись?")) return;
     setPageError("");
     try {
@@ -905,22 +705,12 @@ export function AppointmentsPage() {
           />
         </label>
 
-        <button
-          className="primary-inline-button"
-          disabled={
-            clients.length ===
-              0 ||
-            vehicles.length ===
-              0
-          }
-          onClick={
-            openCreate
-          }
-          type="button"
-        >
-          <Plus size={17} />
-          Новая запись
-        </button>
+        {canManage && (
+          <button className="primary-inline-button" onClick={openCreate} type="button">
+            <Plus size={17} />
+            Новая запись
+          </button>
+        )}
       </div>
 
 
@@ -966,10 +756,6 @@ export function AppointmentsPage() {
               <strong>
                 На эту дату записей нет
               </strong>
-
-              <p>
-                Создай новую запись кнопкой сверху.
-              </p>
             </div>
           </div>
         ) : (
@@ -1024,90 +810,57 @@ export function AppointmentsPage() {
                     </p>
                   </div>
 
-                  <div className="appointment-card-actions">
-                    <button
-                      className="icon-action"
-                      disabled={
-                        Boolean(
-                          appointment
-                            .sync_pending,
-                        )
-                      }
-                      onClick={() => {
-                        openEdit(
-                          appointment,
-                        );
-                      }}
-                      title="Изменить"
-                      type="button"
-                    >
-                      <Edit3
-                        size={17}
-                      />
-                    </button>
-
-                    {appointment
-                      .status ===
-                    "scheduled" ? (
-                      <>
+                  {canManage ? (
+                    <div className="appointment-card-actions">
                       <button
-                        className="danger-soft-button"
-                        disabled={
-                          Boolean(
-                            appointment
-                              .sync_pending,
-                          )
-                        }
-                        onClick={() => {
-                          void changeStatus(
-                            appointment,
-                            "no_show",
-                          );
-                        }}
-                        type="button"
-                      >
-                        <UserX
-                          size={16}
-                        />
-
-                        Не приехал
-                      </button>
-                      <button
-                        className="danger-soft-button"
+                        className="icon-action"
                         disabled={Boolean(appointment.sync_pending)}
-                        onClick={() => { void cancelBooking(appointment); }}
+                        onClick={() => { void openEdit(appointment); }}
+                        title="Изменить"
                         type="button"
                       >
-                        Отменить запись
+                        <Edit3 size={17} />
                       </button>
-                      </>
-                    ) : appointment.status === "no_show" ? (
-                      <button
-                        className="secondary-button"
-                        disabled={
-                          Boolean(
-                            appointment
-                              .sync_pending,
-                          )
-                        }
-                        onClick={() => {
-                          void changeStatus(
-                            appointment,
-                            "scheduled",
-                          );
-                        }}
-                        type="button"
-                      >
-                        <RotateCcw
-                          size={16}
-                        />
 
-                        Вернуть
-                      </button>
-                    ) : (
-                      <span>Отмена</span>
-                    )}
-                  </div>
+                      {appointment.status === "scheduled" && (
+                        <>
+                          <button
+                            className="danger-soft-button"
+                            disabled={Boolean(appointment.sync_pending)}
+                            onClick={() => { void changeStatus(appointment, "no_show"); }}
+                            type="button"
+                          >
+                            <UserX size={16} />
+                            Не приехал
+                          </button>
+                          <button
+                            className="danger-soft-button"
+                            disabled={Boolean(appointment.sync_pending)}
+                            onClick={() => { void cancelBooking(appointment); }}
+                            type="button"
+                          >
+                            Отменить запись
+                          </button>
+                        </>
+                      )}
+
+                      {appointment.status === "no_show" && (
+                        <button
+                          className="secondary-button"
+                          disabled={Boolean(appointment.sync_pending)}
+                          onClick={() => { void changeStatus(appointment, "scheduled"); }}
+                          type="button"
+                        >
+                          <RotateCcw size={16} />
+                          Вернуть
+                        </button>
+                      )}
+
+                      {appointment.status === "cancelled" && <span>Отмена</span>}
+                    </div>
+                  ) : (
+                    <span className="appointment-card-actions">{appointmentStatusLabels[appointment.status]}</span>
+                  )}
                 </article>
               ),
             )}
@@ -1116,7 +869,7 @@ export function AppointmentsPage() {
       </div>
 
 
-      {formOpen && (
+      {canManage && formOpen && (
         <div className="modal-backdrop">
           <form
             className="modal-card"
@@ -1154,135 +907,83 @@ export function AppointmentsPage() {
 
             <div className="form-grid">
               <label>
-                <span>
-                  Клиент *
-                </span>
-
-                <select
-                  required
-                  value={
-                    form.client_id
-                  }
-                  onChange={(
-                    event,
-                  ) => {
-                    const clientId =
-                      event.target
-                        .value;
-
-                    const client =
-                      clients.find(
-                        (item) =>
-                          item.id ===
-                          clientId,
-                      );
-
-                    const firstVehicle =
-                      client
-                        ? vehiclesForClient(
-                            client,
-                          )[0] ??
-                          null
-                        : null;
-
-                    setFormError("");
-
-                    setForm({
-                      ...form,
-
-                      client_id:
-                        clientId,
-
-                      vehicle_id:
-                        firstVehicle
-                          ?.id ??
-                        "",
-                    });
+                <span>Найти клиента</span>
+                <input
+                  type="search"
+                  placeholder="Имя, телефон или номер"
+                  maxLength={200}
+                  disabled={saving}
+                  value={clientSearch}
+                  onChange={(event) => {
+                    setClientSearch(event.target.value);
+                    setClientLookup(null);
                   }}
-                >
-                  {clients.map(
-                    (client) => (
-                      <option
-                        key={
-                          client.id
-                        }
-                        value={
-                          client.id
-                        }
-                      >
-                        {clientLabel(
-                          client,
-                        )}
-                      </option>
-                    ),
-                  )}
-                </select>
+                />
+                <small aria-live="polite">{lookupStatus(clientResults, "Клиенты не найдены.")}</small>
               </label>
-
 
               <label>
-                <span>
-                  Автомобиль *
-                </span>
+                <span>Найти автомобиль клиента</span>
+                <input
+                  type="search"
+                  placeholder="Госномер, VIN или модель"
+                  maxLength={200}
+                  disabled={saving || !selectedClient}
+                  value={vehicleSearch}
+                  onChange={(event) => {
+                    setVehicleSearch(event.target.value);
+                    setVehicleLookup(null);
+                  }}
+                />
+                <small aria-live="polite">
+                  {selectedClient ? lookupStatus(vehicleResults, "Автомобили не найдены.") : "Сначала выберите клиента."}
+                </small>
+              </label>
 
+              <label>
+                <span>Клиент *</span>
                 <select
                   required
-                  value={
-                    form.vehicle_id
-                  }
-                  onChange={(
-                    event,
-                  ) => {
+                  disabled={saving || (!clientResults && !selectedClient)}
+                  value={selectedClient?.id ?? ""}
+                  onChange={(event) => {
+                    const client = clientOptions.find((item) => item.id === event.target.value) ?? null;
+                    setSelectedClient(client);
+                    setSelectedVehicle(null);
+                    setVehicleSearch("");
+                    setVehicleLookup(null);
                     setFormError("");
-
-                    setForm({
-                      ...form,
-
-                      vehicle_id:
-                        event.target
-                          .value,
-                    });
                   }}
                 >
-                  {availableVehicles
-                    .length === 0 && (
-                    <option value="">
-                      У клиента нет автомобиля
+                  <option value="">Выберите клиента</option>
+                  {clientOptions.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {clientLabel(client)}
                     </option>
-                  )}
-
-                  {availableVehicles.map(
-                    (vehicle) => (
-                      <option
-                        key={
-                          vehicle.id
-                        }
-                        value={
-                          vehicle.id
-                        }
-                      >
-                        {
-                          vehicle.brand
-                        }{" "}
-                        {
-                          vehicle.model
-                        }{" "}
-                        ·{" "}
-                        {
-                          vehicle
-                            .license_plate
-                        }
-
-                        {vehicle
-                          .sync_pending
-                          ? " · ожидает синхронизации"
-                          : ""}
-                      </option>
-                    ),
-                  )}
+                  ))}
                 </select>
               </label>
 
+              <label>
+                <span>Автомобиль *</span>
+                <select
+                  required
+                  disabled={saving || !selectedClient || (!vehicleResults && !selectedVehicle)}
+                  value={selectedVehicle?.id ?? ""}
+                  onChange={(event) => {
+                    setSelectedVehicle(vehicleOptions.find((item) => item.id === event.target.value) ?? null);
+                    setFormError("");
+                  }}
+                >
+                  <option value="">Выберите автомобиль</option>
+                  {vehicleOptions.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.brand} {vehicle.model} · {vehicle.license_plate}
+                      {vehicle.sync_pending ? " · ожидает синхронизации" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               <label>
                 <span>
@@ -1419,7 +1120,7 @@ export function AppointmentsPage() {
               <button
                 className="primary-inline-button"
                 disabled={
-                  saving
+                  saving || !selectedClient || !selectedVehicle
                 }
                 type="submit"
               >

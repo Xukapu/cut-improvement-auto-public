@@ -1,10 +1,8 @@
 
 """Планировщик и отправка уведомлений клиентам СТО.
 
-Безопасные режимы MAX:
-- исходная тестовая БД: только клиент №3;
-- новая рабочая БД: все привязанные клиенты, только после явного включения;
-- любые другие БД: автоматическая отправка выключена.
+Режим MAX по умолчанию выключен. Тестовый режим отправляет одному
+выбранному клиенту, рабочий режим отправляет привязанным клиентам.
 """
 
 import asyncio
@@ -12,34 +10,29 @@ import logging
 import os
 import re
 import time
-
 from contextlib import suppress
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal as SessionFactory
 from app.db.session import engine as db_engine
-
 from app.models.appointment import Appointment
 from app.models.client import Client
-
 from app.models.notification import (
     ClientNotificationPreference,
     CustomerNotification,
     NotificationChannel,
+    NotificationKind,
     NotificationStatus,
 )
-
+from app.models.work_order import WorkOrder, WorkOrderStatus
 from app.services.max_bot_service import _api_request
-
 from app.services.notification import (
     appointment_datetime,
     prepare_due_service_reminders,
 )
-
-from app.models.notification import NotificationKind as CancellationKind
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -56,17 +49,26 @@ MAX_ALL_CLIENTS_ENV = "CUT_MAX_ALL_CLIENTS_ENABLED"
 
 
 def get_max_dispatch_mode() -> str:
-    """Return 'test', 'all' or 'disabled' for the actual connected DB.
-
-    The new DB is opt-in; setting the flag against the old DB never enables
-    broad dispatch. This setting does not alter migrations or database data.
-    """
+    settings = get_settings()
     database_name = db_engine.url.database
-    if database_name == LEGACY_DB_NAME:
+    if settings.max_dispatch_mode == "test" and (
+        settings.max_test_client_number is not None or database_name == LEGACY_DB_NAME
+    ):
         return "test"
-    if database_name == PRODUCTION_DB_NAME:
-        if os.getenv(MAX_ALL_CLIENTS_ENV, "").strip() == "1":
-            return "all"
+    if (
+        settings.max_dispatch_mode == "all"
+        and settings.is_production
+        and database_name != LEGACY_DB_NAME
+    ):
+        return "all"
+    # Existing Windows installations use a different setting. Keep it scoped
+    # to their production DB, and respect an explicitly configured mode.
+    if (
+        "max_dispatch_mode" not in settings.model_fields_set
+        and database_name == PRODUCTION_DB_NAME
+        and os.getenv(MAX_ALL_CLIENTS_ENV, "").strip() == "1"
+    ):
+        return "all"
     return "disabled"
 
 
@@ -141,7 +143,7 @@ def _handle_max_delivery_error(
             delay = MAX_RATE_LIMIT_RETRY_SECONDS[previous]
             notification.status = NotificationStatus.PREPARED
             notification.scheduled_for = (
-                datetime.now(timezone.utc) + timedelta(seconds=delay)
+                datetime.now(UTC) + timedelta(seconds=delay)
             )
             notification.error_message = (
                 f"MAX_RETRY:{next_attempt}: HTTP 429; "
@@ -162,14 +164,26 @@ def _handle_max_delivery_error(
     )[:2000]
 
 
-def appointment_is_valid(
+def notification_is_current(
     db,
     notification: CustomerNotification,
 ) -> bool:
-    """Проверяем, что запись не отменена и ещё актуальна."""
+    """Проверяем актуальность события перед отправкой."""
+
+    if notification.kind == NotificationKind.WORK_ORDER_READY:
+        if notification.work_order_id is None:
+            return False
+        order = db.get(WorkOrder, notification.work_order_id)
+        return (
+            order is not None
+            and order.deleted_at is None
+            and order.status == WorkOrderStatus.READY
+            and order.client_id == notification.client_id
+            and order.vehicle_id == notification.vehicle_id
+        )
 
     if notification.appointment_id is None:
-        return True
+        return notification.kind == NotificationKind.SERVICE_REMINDER
 
     appointment = db.get(
         Appointment,
@@ -188,18 +202,13 @@ def appointment_is_valid(
         appointment.status,
     )
 
-    if notification.kind == CancellationKind.APPOINTMENT_CANCELLATION:
+    if notification.kind == NotificationKind.APPOINTMENT_CANCELLATION:
         return appointment_status == "cancelled"
 
     if appointment_status != "scheduled":
         return False
 
-    if appointment_datetime(
-        appointment
-    ) <= datetime.now().astimezone():
-        return False
-
-    return True
+    return appointment_datetime(appointment) > datetime.now(UTC)
 
 
 def dispatch_due_max_once() -> tuple[int, int]:
@@ -225,6 +234,7 @@ def dispatch_due_max_once() -> tuple[int, int]:
     sent_count = 0
     failed_count = 0
     checked_availability = False
+    test_client_number = get_settings().max_test_client_number or TEST_CLIENT_NUMBER
 
     for _ in range(MAX_MESSAGES_PER_CHECK):
         with SessionFactory() as db:
@@ -252,7 +262,7 @@ def dispatch_due_max_once() -> tuple[int, int]:
                     CustomerNotification.channel == NotificationChannel.MAX,
                     CustomerNotification.status == NotificationStatus.PREPARED,
                     CustomerNotification.scheduled_for
-                    <= datetime.now(timezone.utc),
+                    <= datetime.now(UTC),
                 )
                 .order_by(
                     CustomerNotification.scheduled_for.asc(),
@@ -267,7 +277,7 @@ def dispatch_due_max_once() -> tuple[int, int]:
 
             if mode == "test":
                 statement = statement.where(
-                    Client.client_number == TEST_CLIENT_NUMBER
+                    Client.client_number == test_client_number
                 )
 
             row = db.execute(statement).first()
@@ -290,7 +300,7 @@ def dispatch_due_max_once() -> tuple[int, int]:
                     return sent_count, failed_count
                 checked_availability = True
 
-            if not appointment_is_valid(db, notification):
+            if not notification_is_current(db, notification):
                 notification.status = NotificationStatus.CANCELLED
                 notification.error_message = None
                 db.commit()
@@ -346,7 +356,7 @@ def dispatch_due_max_once() -> tuple[int, int]:
                     raise ValueError("MAX returned no message ID; inspect delivery")
 
                 notification.status = NotificationStatus.SENT
-                notification.sent_at = datetime.now(timezone.utc)
+                notification.sent_at = datetime.now(UTC)
                 notification.provider_message_id = str(message_id)
                 notification.error_message = None
                 db.commit()  # Persist this ONE send before processing another.

@@ -1,9 +1,11 @@
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    DateTime,
     ForeignKey,
     Identity,
     Index,
@@ -55,6 +57,11 @@ class WorkItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     price: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,
+    )
+
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
 

@@ -2,15 +2,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, status
 
-from app.api.deps import DbSession, OwnerOnly, StaffUser
+from app.api.deps import DbSession, OwnerOnly, OwnerOrTechAdmin, StaffUser
 from app.schemas.work_item import (
     WorkItemCreate,
     WorkItemFinancialListResponse,
     WorkItemFinancialResponse,
     WorkItemListResponse,
+    WorkItemPublicResponse,
     WorkItemUpdate,
 )
 from app.services.work_item import (
+    complete_work_item,
     create_work_item,
     get_order_work_items,
     get_order_work_items_financial,
@@ -106,4 +108,22 @@ def edit_work(
         work_order_number=work_order_number,
         work_item_number=work_item_number,
         payload=payload,
+    )
+
+
+@router.patch(
+    "/{work_order_number}/works/{work_item_number}/complete",
+    response_model=WorkItemPublicResponse,
+    summary="Завершить работу заказ-наряда",
+)
+def mark_work_complete(
+    work_order_number: PositiveNumber,
+    work_item_number: PositiveNumber,
+    db: DbSession,
+    _current_user: OwnerOrTechAdmin,
+) -> WorkItemPublicResponse:
+    return complete_work_item(
+        db,
+        work_order_number=work_order_number,
+        work_item_number=work_item_number,
     )

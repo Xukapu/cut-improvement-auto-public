@@ -2,6 +2,8 @@ import {
   cacheApiResponse,
   emitServerState,
   getCachedApiResponse,
+  getOfflineUserId,
+  isOfflineCachePath,
 } from "../offline/offlineStore";
 
 
@@ -471,12 +473,13 @@ export async function apiRequest<T>(
     requestOptions.method ??
     "GET";
 
-  const allowCache =
+  const offlineUserId = getOfflineUserId();
+  const canUseOfflineCache = () =>
     offlineCache &&
+    offlineUserId !== null &&
+    offlineUserId === getOfflineUserId() &&
     isGetRequest(method) &&
-    path.startsWith(
-      "/api/v1/",
-    );
+    isOfflineCachePath(path);
 
 
   const headers =
@@ -526,7 +529,7 @@ export async function apiRequest<T>(
       false,
     );
 
-    if (allowCache) {
+    if (canUseOfflineCache()) {
       const cached =
         await cachedFallback<T>(
           path,
@@ -564,7 +567,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     if (
-      allowCache &&
+      canUseOfflineCache() &&
       response.status >= 500
     ) {
       const cached =
@@ -602,7 +605,7 @@ export async function apiRequest<T>(
   }
 
 
-  if (allowCache) {
+  if (canUseOfflineCache()) {
     await cacheApiResponse(
       path,
       payload,

@@ -1,0 +1,22 @@
+{
+  "application": "CUT Improvement Auto",
+  "version": "0.2.1",
+  "files": {
+    "app-icon.svg": "d919073fced627745c58724fcbd805db76f281b5e9def63e8d1424b1da6fcd39",
+    "assets/index-C_FJdmmh.js": "ed7b5d9110a32607b6bcaeb533e8024a6964e5c28fc5f7d1104564996a704061",
+    "assets/index-cz9QxIeQ.css": "06da30d72ca169a135359f0223fccd7d71359dc9727d162985e486e1172dd6b5",
+    "cut-night-assets/approved-light-hero.jpg": "16c780d825bd15d5edaf419818907d778e2e7716dc925dcaf0b0538e2793b56b",
+    "cut-night-assets/approved-night-hero.jpg": "9f12286a8431540cdd03b806e41b3ca918c5d4dbeaa467ce4f980d335d3339ec",
+    "cut-night-assets/cut-approved-dark-car.png": "7503744a63c0d641133030d44487f0f33ae40181dcd671945575ac9937427737",
+    "cut-night-assets/cut-approved-light-car.png": "194e577c5833ee6afeac9650d4d2e23a9c5b42b081d4fdfad6e1a82761654046",
+    "cut-night-assets/cut-v3-supra-dark.webp": "42bfe31ebf8176af4c47dea79e8a751520eb831ddd43ac2f4d16492a9947ffe4",
+    "cut-night-assets/cut-v3-supra-light.webp": "fa9d86683bd81d29f9629f57738b7ee0e9e8c467e6dd242f06093bf5af461163",
+    "cut-night-assets/improvement-auto-logo.png": "5cd04ae9ab8de71eb6f7cb17de8b19feebc4355619a1e935e43f54ecc9eb9075",
+    "cut-night-assets/night-hero.jpg": "43c77bee82146418c6e713cafc37bba2fb429c7d8e42e610144cd04e165dee58",
+    "favicon.svg": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66",
+    "icons.svg": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a",
+    "index.html": "14b1f2080bf79afe0f162568aff423a9eaf838bbd397ebd393f55bff701bf340",
+    "manifest.webmanifest": "e0ad1f7c95d075728e89de91666cabdd35ea1e6bfbe0420f86bc448deb4adfb1",
+    "sw.js": "b184c82517be46bb017205e94b476b0e75ae4c5f5c6b538174a82795fb148358"
+  }
+}

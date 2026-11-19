@@ -2,29 +2,37 @@
 """Основное приложение ЦУТ Improvement Auto."""
 
 from contextlib import asynccontextmanager
+from functools import lru_cache
+from os import environ
+from pathlib import Path
 
-from fastapi import FastAPI
+from alembic.script import ScriptDirectory
+from alembic.util.exc import CommandError
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
-
+from app.db.session import engine
+from app.services.frontend_release import resolve_frontend_dist
 from app.services.max_bot_service import (
     router as max_link_router,
+)
+from app.services.max_bot_service import (
     start_max_bot,
     stop_max_bot,
 )
-
 from app.services.max_link_screen import (
     router as max_screen_router,
 )
-
 from app.services.notification_scheduler import (
     start_notification_scheduler,
     stop_notification_scheduler,
 )
-
 
 settings = get_settings()
 
@@ -93,24 +101,51 @@ def healthcheck() -> HealthResponse:
     )
 
 
-# === CUT FRONTEND STATIC SERVING: BEGIN ===
-# The mount is deliberately LAST. API, MAX routes and /health always win.
-# Vite dev mode at :5173 is unaffected.
-from os import environ as _cut_environ
-from pathlib import Path as _CutPath
-from fastapi.staticfiles import StaticFiles as _CutStaticFiles
+@lru_cache(maxsize=1)
+def expected_database_revisions() -> frozenset[str]:
+    migrations = Path(__file__).resolve().parent / "db" / "migrations"
+    return frozenset(ScriptDirectory(str(migrations)).get_heads())
 
-from app.services.frontend_release import resolve_frontend_dist as _cut_resolve_frontend_dist
 
-_cut_frontend_override = _cut_environ.get("CUT_FRONTEND_DIST", "").strip()
-_cut_frontend_dist = _cut_resolve_frontend_dist(
-    _CutPath(__file__).resolve().parents[2],
-    _cut_frontend_override,
+@app.get(
+    "/ready",
+    response_model=HealthResponse,
+    tags=["system"],
+    summary="Готовность приложения и базы данных",
 )
-if _cut_frontend_dist.is_dir() and (_cut_frontend_dist / "index.html").is_file():
+def readiness_check() -> HealthResponse:
+    try:
+        expected = expected_database_revisions()
+        with engine.connect() as connection:
+            current = frozenset(
+                connection.scalars(text("SELECT version_num FROM alembic_version"))
+            )
+    except (CommandError, OSError, SQLAlchemyError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="База данных недоступна или не подготовлена.",
+        ) from exc
+
+    if not expected or current != expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Версия схемы базы данных отличается от версии приложения.",
+        )
+
+    return healthcheck()
+
+
+# === CUT FRONTEND STATIC SERVING: BEGIN ===
+# Register API and system routes before mounting the frontend.
+# Vite dev mode at :5173 is unaffected.
+frontend_dist = resolve_frontend_dist(
+    Path(__file__).resolve().parents[2],
+    environ.get("CUT_FRONTEND_DIST", "").strip(),
+)
+if frontend_dist.is_dir() and (frontend_dist / "index.html").is_file():
     app.mount(
         "/",
-        _CutStaticFiles(directory=str(_cut_frontend_dist), html=True),
+        StaticFiles(directory=str(frontend_dist), html=True),
         name="cut_frontend",
     )
 # === CUT FRONTEND STATIC SERVING: END ===

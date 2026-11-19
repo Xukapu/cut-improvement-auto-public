@@ -1,0 +1,3 @@
+# Release manifests verify the exact bytes on both Windows and Linux.
+/deploy/frontend_releases/** -text
+/deploy/postgres-init.sh text eol=lf

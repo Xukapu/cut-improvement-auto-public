@@ -23,6 +23,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type {
@@ -30,6 +31,7 @@ import type {
 } from "react";
 
 import {
+  completeWork,
   createDispute,
   createPart,
   createPayment,
@@ -70,6 +72,7 @@ import {
   listClients,
 } from "../api/clients";
 import {
+  getVehicle,
   listVehicles,
 } from "../api/vehicles";
 import type {
@@ -104,6 +107,7 @@ import type {
 
 type Props = {
   currentUser: CurrentUser;
+  initialWorkOrderNumber?: number | null;
 };
 
 
@@ -124,6 +128,9 @@ type AssignmentForm = {
   employee_number: string;
   share_percent: string;
 };
+
+
+const ORDER_PAGE_SIZE = 25;
 
 
 const statusLabels:
@@ -252,6 +259,7 @@ function vehicleTitle(
 
 export function WorkOrdersPage({
   currentUser,
+  initialWorkOrderNumber = null,
 }: Props) {
   const isOwner =
     currentUser.role === "owner";
@@ -284,6 +292,11 @@ export function WorkOrdersPage({
   ] = useState<WorkOrder[]>(
     [],
   );
+  const [ordersOffset, setOrdersOffset] = useState(0);
+  const [ordersTotal, setOrdersTotal] = useState(0);
+  const [orderNumberQuery, setOrderNumberQuery] = useState("");
+  const listRequestId = useRef(0);
+  const orderListQuery = useRef({ filter: "all" as OrderFilter, offset: 0 });
 
   const [
     ordersLoading,
@@ -299,8 +312,10 @@ export function WorkOrdersPage({
     selectedNumber,
     setSelectedNumber,
   ] = useState<number | null>(
-    null,
+    initialWorkOrderNumber,
   );
+  const selectedNumberRef = useRef(initialWorkOrderNumber);
+  const detailRequestId = useRef(0);
 
   const [
     selectedOrder,
@@ -312,7 +327,7 @@ export function WorkOrdersPage({
   const [
     detailLoading,
     setDetailLoading,
-  ] = useState(false);
+  ] = useState(initialWorkOrderNumber !== null);
 
   const [
     tab,
@@ -321,12 +336,8 @@ export function WorkOrdersPage({
     "works",
   );
 
-  const [
-    vehicles,
-    setVehicles,
-  ] = useState<Vehicle[]>(
-    [],
-  );
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle>();
+  const [completingWorkNumber, setCompletingWorkNumber] = useState<number | null>(null);
 
 
   const [
@@ -423,16 +434,17 @@ export function WorkOrdersPage({
   ] = useState<
     Appointment[]
   >([]);
+  const [clientSearch, setClientSearch] = useState("");
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [clientSearchLoading, setClientSearchLoading] = useState(false);
+  const [vehicleSearchLoading, setVehicleSearchLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
 
-  const [
-    createClientNumber,
-    setCreateClientNumber,
-  ] = useState("");
+  const [createClient, setCreateClient] = useState<Client | null>(null);
+  const createClientNumber = createClient?.client_number ?? 0;
 
-  const [
-    createVehicleNumber,
-    setCreateVehicleNumber,
-  ] = useState("");
+  const [createVehicle, setCreateVehicle] = useState<Vehicle | null>(null);
+  const createVehicleNumber = createVehicle?.vehicle_number ?? 0;
 
   const [
     createAppointmentNumber,
@@ -652,67 +664,62 @@ export function WorkOrdersPage({
   ] = useState(false);
 
 
-  const loadOrders =
-    useCallback(async () => {
-      setOrdersLoading(true);
-      setPageError("");
+  const selectOrder = useCallback((orderNumber: number | null) => {
+    if (selectedNumberRef.current === orderNumber) {
+      return;
+    }
 
-      try {
-        const result =
-          await listWorkOrders(
-            filter === "all"
-              ? {}
-              : {
-                  status: filter,
-                },
-          );
+    selectedNumberRef.current = orderNumber;
+    detailRequestId.current += 1;
+    setSelectedNumber(orderNumber);
+    setSelectedOrder(null);
+    setDetailLoading(orderNumber !== null);
+    setSelectedVehicle(undefined);
+    setDisputePhotos({});
+    setPageError("");
+    setTab("works");
+    setEditingOrder(false);
+    setShowWorkForm(false);
+    setShowPartForm(false);
+    setShowRecommendedForm(false);
+    setShowDisputeForm(false);
+    setShowPaymentForm(false);
+    setShowPrintPreview(false);
+  }, []);
 
-        setOrders(
-          result.items,
-        );
+  const loadOrders = useCallback(async () => {
+    const requestId = ++listRequestId.current;
+    const { filter, offset } = orderListQuery.current;
+    setOrdersLoading(true);
 
-        if (
-          result.items.length === 0
-        ) {
-          setSelectedNumber(
-            null,
-          );
-          setSelectedOrder(
-            null,
-          );
-          return;
-        }
+    try {
+      const result = await listWorkOrders({
+        status: filter === "all" ? undefined : filter,
+        limit: ORDER_PAGE_SIZE,
+        offset,
+      });
+      if (requestId !== listRequestId.current) return;
 
-        setSelectedNumber(
-          (current) => {
-            if (
-              current !== null &&
-              result.items.some(
-                (item) =>
-                  item
-                    .work_order_number ===
-                  current,
-              )
-            ) {
-              return current;
-            }
-
-            return result
-              .items[0]
-              .work_order_number;
-          },
-        );
-      } catch (error) {
-        setPageError(
-          errorText(
-            error,
-            "Не удалось загрузить заказ-наряды.",
-          ),
-        );
-      } finally {
-        setOrdersLoading(false);
+      if (offset > 0 && result.total <= offset) {
+        const lastOffset = Math.max(0, Math.floor((result.total - 1) / ORDER_PAGE_SIZE) * ORDER_PAGE_SIZE);
+        orderListQuery.current = { filter, offset: lastOffset };
+        setOrdersOffset(lastOffset);
+        return;
       }
-    }, [filter]);
+
+      setOrders(result.items);
+      setOrdersTotal(result.total);
+      if (selectedNumberRef.current === null && result.items.length > 0) {
+        selectOrder(result.items[0].work_order_number);
+      }
+    } catch (error) {
+      if (requestId === listRequestId.current) {
+        setPageError(errorText(error, "Не удалось загрузить заказ-наряды."));
+      }
+    } finally {
+      if (requestId === listRequestId.current) setOrdersLoading(false);
+    }
+  }, [selectOrder]);
 
 
   const loadDetails =
@@ -720,6 +727,9 @@ export function WorkOrdersPage({
       async (
         workOrderNumber: number,
       ) => {
+        if (selectedNumberRef.current !== workOrderNumber) return;
+
+        const requestId = ++detailRequestId.current;
         setDetailLoading(true);
         setPageError("");
 
@@ -761,6 +771,8 @@ export function WorkOrdersPage({
             ),
           ]);
 
+          if (requestId !== detailRequestId.current) return;
+
           setSelectedOrder(order);
           setOrderReason(
             order.reason,
@@ -796,8 +808,9 @@ export function WorkOrdersPage({
             paymentResult,
           );
 
-          const photoEntries =
-            await Promise.all(
+          const [vehicle, photoEntries] = await Promise.all([
+            getVehicle(order.vehicle_number).catch(() => undefined),
+            Promise.all(
               disputeResult.items.map(
                 async (item) => {
                   const photos =
@@ -812,14 +825,20 @@ export function WorkOrdersPage({
                   ] as const;
                 },
               ),
-            );
+            ),
+          ]);
 
+          if (requestId !== detailRequestId.current) return;
+
+          setSelectedVehicle(vehicle);
           setDisputePhotos(
             Object.fromEntries(
               photoEntries,
             ),
           );
         } catch (error) {
+          if (requestId !== detailRequestId.current) return;
+
           setPageError(
             errorText(
               error,
@@ -827,7 +846,7 @@ export function WorkOrdersPage({
             ),
           );
         } finally {
-          setDetailLoading(false);
+          if (requestId === detailRequestId.current) setDetailLoading(false);
         }
       },
       [isOwner],
@@ -845,7 +864,7 @@ export function WorkOrdersPage({
         timer,
       );
     };
-  }, [loadOrders]);
+  }, [filter, ordersOffset, loadOrders]);
 
 
   useEffect(() => {
@@ -876,23 +895,6 @@ export function WorkOrdersPage({
   useEffect(() => {
     let active = true;
 
-    listVehicles(
-      "",
-      100,
-    )
-      .then((result) => {
-        if (active) {
-          setVehicles(
-            result.items,
-          );
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setVehicles([]);
-        }
-      });
-
     if (isOwner) {
       listEmployees()
         .then((result) => {
@@ -918,23 +920,6 @@ export function WorkOrdersPage({
   }, [isOwner]);
 
 
-  const selectedVehicle =
-    useMemo(
-      () =>
-        vehicles.find(
-          (vehicle) =>
-            vehicle
-              .vehicle_number ===
-            selectedOrder
-              ?.vehicle_number,
-        ),
-      [
-        vehicles,
-        selectedOrder,
-      ],
-    );
-
-
   const workTotal =
     useMemo(
       () =>
@@ -952,170 +937,129 @@ export function WorkOrdersPage({
       [works],
     );
 
+  function changeOrderList(nextFilter: OrderFilter, nextOffset: number) {
+    const current = orderListQuery.current;
+    if (current.filter === nextFilter && current.offset === nextOffset) return false;
 
-  async function openCreateOrder() {
+    listRequestId.current += 1;
+    orderListQuery.current = { filter: nextFilter, offset: nextOffset };
+    setFilter(nextFilter);
+    setOrdersOffset(nextOffset);
+    setOrders([]);
+    setOrdersLoading(true);
+    selectOrder(null);
+    return true;
+  }
+
+  function findOrderByNumber(event: FormEvent) {
+    event.preventDefault();
+    const number = Number(orderNumberQuery);
+    if (!Number.isSafeInteger(number) || number < 1) return;
+
+    if (selectedNumberRef.current === number) {
+      void loadDetails(number);
+    } else {
+      selectOrder(number);
+    }
+  }
+
+
+  useEffect(() => {
+    if (!showCreate) return;
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await listClients(clientSearch, 100);
+        if (active) setCreateClients(result.items.filter((client) => client.client_number > 0));
+      } catch (error) {
+        if (active) setCreateError(errorText(error, "Не удалось загрузить клиентов."));
+      } finally {
+        if (active) setClientSearchLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [showCreate, clientSearch]);
+
+  useEffect(() => {
+    if (!showCreate || !createClientNumber) return;
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await listVehicles(vehicleSearch, 100, createClientNumber);
+        if (active) setCreateVehicles(result.items.filter((vehicle) => vehicle.vehicle_number > 0));
+      } catch (error) {
+        if (active) setCreateError(errorText(error, "Не удалось загрузить автомобили клиента."));
+      } finally {
+        if (active) setVehicleSearchLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [showCreate, createClientNumber, vehicleSearch]);
+
+  useEffect(() => {
+    if (!showCreate || !createClientNumber || !createVehicleNumber) return;
+
+    let active = true;
+    const scope = { clientNumber: createClientNumber, vehicleNumber: createVehicleNumber };
+    void Promise.all([
+      listAppointments({ ...scope, status: "scheduled" }),
+      listWorkOrders(scope),
+    ]).then(([result, existingOrders]) => {
+      if (!active) return;
+
+      const usedAppointments = new Set(existingOrders.items.map((order) => order.appointment_number));
+      setCreateAppointments(result.items.filter((appointment) =>
+        appointment.appointment_number > 0 && !usedAppointments.has(appointment.appointment_number),
+      ));
+    }).catch((error: unknown) => {
+      if (active) setCreateError(errorText(error, "Не удалось загрузить записи клиента."));
+    });
+
+    return () => { active = false; };
+  }, [showCreate, createClientNumber, createVehicleNumber]);
+
+  function openCreateOrder() {
     setPageError("");
+    setCreateError("");
     setCreateSaving(false);
-
-    setCreateClientNumber("");
-    setCreateVehicleNumber("");
+    setCreateClient(null);
+    setCreateVehicle(null);
     setCreateAppointmentNumber("");
     setCreateReason("");
     setCreateMileage("");
-
+    setClientSearch("");
+    setVehicleSearch("");
+    setClientSearchLoading(true);
+    setVehicleSearchLoading(false);
+    setCreateClients([]);
     setCreateVehicles([]);
     setCreateAppointments([]);
-
-    try {
-      const result =
-        await listClients(
-          "",
-          100,
-        );
-
-      setCreateClients(
-        result.items,
-      );
-
-      setShowCreate(true);
-    } catch (error) {
-      setPageError(
-        errorText(
-          error,
-          "Не удалось загрузить клиентов.",
-        ),
-      );
-    }
+    setShowCreate(true);
   }
 
-
-  async function handleCreateClient(
-    value: string,
-  ) {
-    setCreateClientNumber(
-      value,
-    );
-
-    setCreateVehicleNumber("");
+  function handleCreateVehicle(vehicle: Vehicle | null) {
+    setCreateVehicle(vehicle);
+    setCreateMileage(vehicle?.mileage == null ? "" : String(vehicle.mileage));
     setCreateAppointmentNumber("");
     setCreateAppointments([]);
-
-    const number =
-      Number(value);
-
-    if (!number) {
-      setCreateVehicles([]);
-      return;
-    }
-
-    try {
-      const result =
-        await listVehicles(
-          "",
-          100,
-          number,
-        );
-
-      setCreateVehicles(
-        result.items,
-      );
-    } catch (error) {
-      setPageError(
-        errorText(
-          error,
-          "Не удалось загрузить автомобили клиента.",
-        ),
-      );
-    }
   }
 
-
-  async function handleCreateVehicle(
-    value: string,
-  ) {
-    setCreateVehicleNumber(
-      value,
-    );
-
-    setCreateAppointmentNumber("");
-
-    const clientNumber =
-      Number(
-        createClientNumber,
-      );
-
-    const vehicleNumber =
-      Number(value);
-
-    const vehicle =
-      createVehicles.find(
-        (item) =>
-          item.vehicle_number ===
-          vehicleNumber,
-      );
-
-    if (
-      vehicle?.mileage !==
-      null &&
-      vehicle?.mileage !==
-      undefined
-    ) {
-      setCreateMileage(
-        String(
-          vehicle.mileage,
-        ),
-      );
-    }
-
-    if (
-      !clientNumber ||
-      !vehicleNumber
-    ) {
-      setCreateAppointments([]);
-      return;
-    }
-
-    try {
-      const result =
-        await listAppointments({
-          clientNumber,
-          vehicleNumber,
-          status: "scheduled",
-        });
-
-      const usedAppointments =
-        new Set(
-          orders
-            .map(
-              (order) =>
-                order
-                  .appointment_number,
-            )
-            .filter(
-              (
-                value,
-              ): value is number =>
-                value !== null,
-            ),
-        );
-
-      setCreateAppointments(
-        result.items.filter(
-          (appointment) =>
-            !usedAppointments.has(
-              appointment
-                .appointment_number,
-            ),
-        ),
-      );
-    } catch (error) {
-      setPageError(
-        errorText(
-          error,
-          "Не удалось загрузить записи клиента.",
-        ),
-      );
-    }
+  function handleCreateClient(client: Client | null) {
+    setCreateClient(client);
+    setVehicleSearch("");
+    setCreateVehicles([]);
+    setVehicleSearchLoading(client !== null);
+    handleCreateVehicle(null);
   }
 
 
@@ -1147,24 +1091,14 @@ export function WorkOrdersPage({
   ) {
     event.preventDefault();
 
-    const clientNumber =
-      Number(
-        createClientNumber,
-      );
-
-    const vehicleNumber =
-      Number(
-        createVehicleNumber,
-      );
-
     const reason =
       createReason.trim();
 
     if (
-      !clientNumber ||
-      !vehicleNumber
+      !createClientNumber ||
+      !createVehicleNumber
     ) {
-      setPageError(
+      setCreateError(
         "Выберите клиента и автомобиль.",
       );
       return;
@@ -1173,23 +1107,23 @@ export function WorkOrdersPage({
     if (
       reason.length < 2
     ) {
-      setPageError(
+      setCreateError(
         "Укажите причину обращения.",
       );
       return;
     }
 
     setCreateSaving(true);
-    setPageError("");
+    setCreateError("");
 
     try {
       const created =
         await createWorkOrder({
           client_number:
-            clientNumber,
+            createClientNumber,
 
           vehicle_number:
-            vehicleNumber,
+            createVehicleNumber,
 
           appointment_number:
             createAppointmentNumber
@@ -1209,15 +1143,11 @@ export function WorkOrdersPage({
         });
 
       setShowCreate(false);
-
-      await loadOrders();
-
-      setSelectedNumber(
-        created
-          .work_order_number,
-      );
+      const changedPage = changeOrderList("all", 0);
+      selectOrder(created.work_order_number);
+      if (!changedPage) await loadOrders();
     } catch (error) {
-      setPageError(
+      setCreateError(
         errorText(
           error,
           "Не удалось создать заказ-наряд.",
@@ -1321,6 +1251,32 @@ export function WorkOrdersPage({
           "Не удалось изменить статус.",
         ),
       );
+    }
+  }
+
+
+  async function markWorkComplete(work: WorkItemPublic | WorkItemFinancial) {
+    if (!selectedOrder || completingWorkNumber !== null) return;
+
+    const orderNumber = selectedOrder.work_order_number;
+    setCompletingWorkNumber(work.work_item_number);
+    setPageError("");
+
+    try {
+      const completed = await completeWork(orderNumber, work.work_item_number);
+      if (selectedNumberRef.current === orderNumber) {
+        setWorks((items) => items.map((item) => item.work_item_number === completed.work_item_number
+          ? { ...item, completed_at: completed.completed_at }
+          : item,
+        ));
+        await loadDetails(orderNumber);
+      }
+    } catch (error) {
+      if (selectedNumberRef.current === orderNumber) {
+        setPageError(errorText(error, "Не удалось отметить работу выполненной."));
+      }
+    } finally {
+      setCompletingWorkNumber(null);
     }
   }
 
@@ -2305,6 +2261,14 @@ export function WorkOrdersPage({
   }
 
 
+  const hasUnfinishedWorks = works.some((work) => !work.completed_at);
+  const createClientOptions = createClient && !createClients.some((client) => client.id === createClient.id)
+    ? [createClient, ...createClients]
+    : createClients;
+  const createVehicleOptions = createVehicle && !createVehicles.some((vehicle) => vehicle.id === createVehicle.id)
+    ? [createVehicle, ...createVehicles]
+    : createVehicles;
+
   function nextStatusActions() {
     if (
       !selectedOrder ||
@@ -2345,6 +2309,7 @@ export function WorkOrdersPage({
               "ready",
             );
           }}
+          disabled={hasUnfinishedWorks}
           type="button"
         >
           <CheckCircle2
@@ -2381,6 +2346,7 @@ export function WorkOrdersPage({
                 "issued",
               );
             }}
+            disabled={hasUnfinishedWorks}
             type="button"
           >
             <CheckCircle2
@@ -2441,7 +2407,7 @@ export function WorkOrdersPage({
                 }
                 key={value}
                 onClick={() => {
-                  setFilter(value);
+                  changeOrderList(value, 0);
                 }}
                 type="button"
               >
@@ -2458,7 +2424,9 @@ export function WorkOrdersPage({
               ordersLoading
             }
             onClick={() => {
+              setPageError("");
               void loadOrders();
+              if (selectedNumber !== null) void loadDetails(selectedNumber);
             }}
             type="button"
           >
@@ -2471,9 +2439,7 @@ export function WorkOrdersPage({
           {canManageOrder && (
             <button
               className="primary-button wo-new-button"
-              onClick={() => {
-                void openCreateOrder();
-              }}
+              onClick={openCreateOrder}
               type="button"
             >
               <Plus size={16} />
@@ -2502,9 +2468,22 @@ export function WorkOrdersPage({
             </span>
 
             <strong>
-              {orders.length}
+              {ordersTotal}
             </strong>
           </div>
+
+          <form className="wo-order-search" onSubmit={findOrderByNumber}>
+            <input
+              aria-label="Номер заказ-наряда"
+              min="1"
+              onChange={(event) => setOrderNumberQuery(event.target.value)}
+              placeholder="Номер заказа"
+              required
+              type="number"
+              value={orderNumberQuery}
+            />
+            <button className="wo-refresh" type="submit">Найти</button>
+          </form>
 
           {ordersLoading &&
           orders.length === 0 ? (
@@ -2532,10 +2511,7 @@ export function WorkOrdersPage({
                         .work_order_number
                     }
                     onClick={() => {
-                      setSelectedNumber(
-                        order
-                          .work_order_number,
-                      );
+                      selectOrder(order.work_order_number);
                     }}
                     type="button"
                   >
@@ -2569,17 +2545,7 @@ export function WorkOrdersPage({
                     </div>
 
                     <div className="wo-order-vehicle">
-                      {vehicleTitle(
-                        vehicles.find(
-                          (vehicle) =>
-                            vehicle
-                              .vehicle_number ===
-                            order
-                              .vehicle_number,
-                        ),
-                        order
-                          .license_plate,
-                      )}
+                      {order.license_plate}
                     </div>
 
                     <div className="wo-order-reason">
@@ -2605,11 +2571,36 @@ export function WorkOrdersPage({
               )}
             </div>
           )}
+          {ordersTotal > ORDER_PAGE_SIZE && (
+            <nav className="wo-order-pagination" aria-label="Страницы заказ-нарядов">
+              <button
+                className="wo-refresh"
+                disabled={ordersLoading || ordersOffset === 0}
+                onClick={() => changeOrderList(filter, ordersOffset - ORDER_PAGE_SIZE)}
+                type="button"
+              >
+                Назад
+              </button>
+              <span aria-live="polite">
+                {Math.floor(ordersOffset / ORDER_PAGE_SIZE) + 1} из {Math.ceil(ordersTotal / ORDER_PAGE_SIZE)}
+              </span>
+              <button
+                className="wo-refresh"
+                disabled={ordersLoading || ordersOffset + ORDER_PAGE_SIZE >= ordersTotal}
+                onClick={() => changeOrderList(filter, ordersOffset + ORDER_PAGE_SIZE)}
+                type="button"
+              >
+                Дальше
+              </button>
+            </nav>
+          )}
         </aside>
 
 
         <main className="wo-detail-panel">
-          {!selectedOrder ? (
+          {!selectedOrder && detailLoading ? (
+            <div className="wo-detail-empty" role="status">Загружаем заказ-наряд…</div>
+          ) : !selectedOrder ? (
             <div className="wo-detail-empty">
               <ClipboardList
                 size={34}
@@ -2682,6 +2673,10 @@ export function WorkOrdersPage({
                   </div>
 
                   {nextStatusActions()}
+                  {canManageOrder && hasUnfinishedWorks &&
+                    (selectedOrder.status === "in_progress" || selectedOrder.status === "ready") && (
+                    <small>Сначала отметьте все работы выполненными.</small>
+                  )}
                 </div>
               </div>
 
@@ -3031,7 +3026,7 @@ export function WorkOrdersPage({
                     <div className="wo-section-heading">
                       <div>
                         <span>
-                          Выполненные работы
+                          План и выполнение
                         </span>
 
                         <h3>
@@ -3040,8 +3035,8 @@ export function WorkOrdersPage({
                       </div>
 
                       {isOwner &&
-                        selectedOrder.status !==
-                          "issued" && (
+                        (selectedOrder.status === "planned" ||
+                          selectedOrder.status === "in_progress") && (
                         <button
                           className="wo-add-button"
                           onClick={
@@ -3303,6 +3298,10 @@ export function WorkOrdersPage({
                                 </strong>
                               </div>
 
+                              <span className="wo-work-status">
+                                {work.completed_at ? `Выполнено ${dateTime(work.completed_at)}` : "Не выполнено"}
+                              </span>
+
                               <div className="wo-performers">
                                 {work.assignments.map(
                                   (
@@ -3340,7 +3339,7 @@ export function WorkOrdersPage({
                                             assignment
                                               .rate_percent_snapshot
                                           }
-                                          % · начислено{" "}
+                                          % · {work.completed_at ? "начислено" : "к начислению"}{" "}
                                           {money(
                                             assignment
                                               .earning_amount,
@@ -3357,7 +3356,7 @@ export function WorkOrdersPage({
                               ) && (
                                 <div className="wo-financial-line">
                                   <span>
-                                    Начисления сотрудникам
+                                    {work.completed_at ? "Начисления сотрудникам" : "К начислению сотрудникам"}
                                   </span>
 
                                   <strong>
@@ -3369,27 +3368,29 @@ export function WorkOrdersPage({
                                 </div>
                               )}
 
-                              {isOwner &&
-                                isFinancialWork(
-                                  work,
-                                ) &&
-                                selectedOrder.status !==
-                                  "issued" && (
+                              {canManageOrder && !work.completed_at && selectedOrder.status !== "issued" && (
                                 <div className="wo-item-actions">
                                   <button
                                     className="wo-link-button"
-                                    onClick={() => {
-                                      openWorkEditor(
-                                        work,
-                                      );
-                                    }}
+                                    disabled={completingWorkNumber !== null ||
+                                      (showWorkForm && editingWork?.work_item_number === work.work_item_number)}
+                                    onClick={() => { void markWorkComplete(work); }}
                                     type="button"
                                   >
-                                    <Edit3
-                                      size={14}
-                                    />
-                                    Изменить
+                                    <CheckCircle2 size={14} />
+                                    {completingWorkNumber === work.work_item_number ? "Сохраняем…" : "Выполнено"}
                                   </button>
+                                  {isOwner && isFinancialWork(work) && (
+                                    <button
+                                      className="wo-link-button"
+                                      disabled={completingWorkNumber !== null}
+                                      onClick={() => { openWorkEditor(work); }}
+                                      type="button"
+                                    >
+                                      <Edit3 size={14} />
+                                      Изменить
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </article>
@@ -4600,7 +4601,9 @@ export function WorkOrdersPage({
               </div>
 
               <button
+                aria-label="Закрыть создание заказа"
                 className="wo-icon-button"
+                disabled={createSaving}
                 onClick={() => {
                   setShowCreate(false);
                 }}
@@ -4610,29 +4613,42 @@ export function WorkOrdersPage({
               </button>
             </div>
 
+            {createError && <div className="wo-error" role="alert">{createError}</div>}
+
             <div className="wo-form-grid">
+              <label className="wo-wide">
+                <span>Поиск клиента</span>
+                <input
+                  maxLength={200}
+                  onChange={(event) => {
+                    setCreateError("");
+                    setClientSearchLoading(true);
+                    setClientSearch(event.target.value);
+                  }}
+                  placeholder="Имя, телефон или номер клиента"
+                  type="search"
+                  value={clientSearch}
+                />
+              </label>
               <label className="wo-wide">
                 <span>
                   Клиент *
                 </span>
 
                 <select
+                  disabled={clientSearchLoading}
                   required
-                  value={
-                    createClientNumber
-                  }
+                  value={createClientNumber || ""}
                   onChange={(event) => {
-                    void handleCreateClient(
-                      event.target
-                        .value,
-                    );
+                    const number = Number(event.target.value);
+                    handleCreateClient(createClientOptions.find((client) => client.client_number === number) ?? null);
                   }}
                 >
                   <option value="">
-                    Выберите клиента
+                    {clientSearchLoading ? "Ищем клиентов…" : "Выберите клиента"}
                   </option>
 
-                  {createClients.map(
+                  {createClientOptions.map(
                     (client) => (
                       <option
                         key={
@@ -4660,30 +4676,41 @@ export function WorkOrdersPage({
               </label>
 
               <label className="wo-wide">
+                <span>Поиск автомобиля клиента</span>
+                <input
+                  disabled={!createClientNumber}
+                  maxLength={200}
+                  onChange={(event) => {
+                    setCreateError("");
+                    setVehicleSearchLoading(true);
+                    setVehicleSearch(event.target.value);
+                  }}
+                  placeholder="Госномер, VIN, марка или модель"
+                  type="search"
+                  value={vehicleSearch}
+                />
+              </label>
+              <label className="wo-wide">
                 <span>
                   Автомобиль *
                 </span>
 
                 <select
                   disabled={
-                    !createClientNumber
+                    !createClientNumber || vehicleSearchLoading
                   }
                   required
-                  value={
-                    createVehicleNumber
-                  }
+                  value={createVehicleNumber || ""}
                   onChange={(event) => {
-                    void handleCreateVehicle(
-                      event.target
-                        .value,
-                    );
+                    const number = Number(event.target.value);
+                    handleCreateVehicle(createVehicleOptions.find((vehicle) => vehicle.vehicle_number === number) ?? null);
                   }}
                 >
                   <option value="">
-                    Выберите автомобиль
+                    {vehicleSearchLoading ? "Ищем автомобили…" : "Выберите автомобиль"}
                   </option>
 
-                  {createVehicles.map(
+                  {createVehicleOptions.map(
                     (vehicle) => (
                       <option
                         key={
@@ -4816,6 +4843,7 @@ export function WorkOrdersPage({
             <div className="wo-form-actions">
               <button
                 className="wo-secondary-action"
+                disabled={createSaving}
                 onClick={() => {
                   setShowCreate(false);
                 }}

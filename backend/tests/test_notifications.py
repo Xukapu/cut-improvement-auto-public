@@ -1,6 +1,7 @@
-from datetime import date, time
+from datetime import date, time, timedelta
 from types import SimpleNamespace
 
+from app.services import notification
 from app.services.notification import (
     build_appointment_reminder_message,
     build_confirmation_message,
@@ -36,6 +37,13 @@ def test_appointment_reminder_message() -> None:
     assert "03.10.2026" in text
     assert "15:00" in text
     assert "Напоминаем" in text
+
+
+def test_appointment_time_uses_workshop_timezone(monkeypatch) -> None:
+    settings = SimpleNamespace(workshop_timezone="Asia/Novosibirsk")
+    monkeypatch.setattr(notification, "get_settings", lambda: settings)
+
+    assert notification.appointment_datetime(appointment_stub()).utcoffset() == timedelta(hours=7)
 
 
 def test_service_reminder_due_by_date() -> None:

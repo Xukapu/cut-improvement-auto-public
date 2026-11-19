@@ -6,6 +6,7 @@ from app.services.report import (
     calculate_employee_amount,
     normalize_period,
 )
+from app.services.work_item import calculate_earning
 from fastapi import HTTPException
 
 
@@ -29,6 +30,21 @@ def test_second_employee_amount() -> None:
 
     assert share_base == Decimal("3000.00")
     assert earning == Decimal("1200.00")
+
+
+def test_employee_amount_matches_order_at_fractional_cent() -> None:
+    price = Decimal("100.03")
+    share = Decimal("50")
+    rate = Decimal("25")
+    share_base, earning = calculate_employee_amount(
+        work_price=price,
+        share_percent=share,
+        rate_percent=rate,
+    )
+
+    assert share_base == Decimal("50.02")
+    assert earning == calculate_earning(price=price, share_percent=share, rate_percent=rate)
+    assert earning == Decimal("12.50")
 
 
 def test_report_period() -> None:

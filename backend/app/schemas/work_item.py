@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -73,6 +74,7 @@ class WorkItemPublicResponse(BaseModel):
     work_item_number: int
     name: str
     price: Decimal
+    completed_at: datetime | None = None
 
     assignments: list[WorkAssignmentPublicResponse]
 
@@ -88,6 +90,7 @@ class WorkItemFinancialResponse(BaseModel):
 
     name: str
     price: Decimal
+    completed_at: datetime | None = None
 
     assignments: list[WorkAssignmentFinancialResponse]
 

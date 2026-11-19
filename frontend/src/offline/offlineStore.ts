@@ -10,7 +10,7 @@ import type {
 const DB_NAME =
   "cut-improvement-auto-offline";
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const RESPONSE_STORE =
   "api-responses";
@@ -61,6 +61,11 @@ let activeUserId:
   string | null = null;
 
 
+export function isOfflineCachePath(path: string): boolean {
+  return /^\/api\/v1\/(?:(?:clients|vehicles)(?:\/[1-9]\d*)?|appointments)$/.test(path.split("?", 1)[0]);
+}
+
+
 function openDatabase():
   Promise<IDBDatabase> {
   return new Promise(
@@ -91,6 +96,20 @@ function openDatabase():
                 keyPath: "key",
               },
             );
+          } else {
+            const cursorRequest = request.transaction?.objectStore(RESPONSE_STORE).openCursor();
+            if (cursorRequest) {
+              cursorRequest.onsuccess = () => {
+                const cursor = cursorRequest.result;
+                if (!cursor) return;
+
+                const item = cursor.value as CachedResponse;
+                if (!isOfflineCachePath(item.path) || Date.now() - item.savedAt > OFFLINE_SESSION_MAX_AGE_MS) {
+                  cursor.delete();
+                }
+                cursor.continue();
+              };
+            }
           }
 
           if (
@@ -254,13 +273,18 @@ export async function cacheApiResponse(
   path: string,
   payload: unknown,
 ): Promise<void> {
-  if (!activeUserId) {
+  const userId = activeUserId;
+  if (!userId) {
     return;
   }
 
   try {
     const db =
       await openDatabase();
+    if (activeUserId !== userId) {
+      db.close();
+      return;
+    }
 
     const transaction =
       db.transaction(
@@ -276,12 +300,11 @@ export async function cacheApiResponse(
     const item:
       CachedResponse = {
         key: cacheKey(
-          activeUserId,
+          userId,
           path,
         ),
 
-        userId:
-          activeUserId,
+        userId,
 
         path,
         payload,
@@ -312,7 +335,8 @@ export async function getCachedApiResponse<T>(
       found: false;
     }
 > {
-  if (!activeUserId) {
+  const userId = activeUserId;
+  if (!userId) {
     return {
       found: false,
     };
@@ -339,7 +363,7 @@ export async function getCachedApiResponse<T>(
       >(
         store.get(
           cacheKey(
-            activeUserId,
+            userId,
             path,
           ),
         ),
@@ -351,7 +375,7 @@ export async function getCachedApiResponse<T>(
 
     db.close();
 
-    if (!item) {
+    if (!item || activeUserId !== userId || Date.now() - item.savedAt > OFFLINE_SESSION_MAX_AGE_MS) {
       return {
         found: false,
       };
@@ -657,7 +681,7 @@ export function loadOfflineSession():
 export async function clearOfflineData():
   Promise<void> {
   const userId =
-    activeUserId;
+    activeUserId ?? loadOfflineSession()?.id;
 
   activeUserId = null;
 

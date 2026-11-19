@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.deps import (
     DbSession,
@@ -102,4 +102,28 @@ def employee_accrual_report(
         db,
         date_from=date_from,
         date_to=date_to,
+    )
+
+
+@router.get(
+    "/employee-accruals/me",
+    response_model=EmployeeAccrualReportResponse,
+    summary="Мои начисления",
+)
+def my_employee_accrual_report(
+    db: DbSession,
+    current_user: StaffUser,
+    date_from: OptionalDate = None,
+    date_to: OptionalDate = None,
+) -> EmployeeAccrualReportResponse:
+    if current_user.employee_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Учётная запись не связана с исполнителем работ.",
+        )
+    return get_employee_accrual_report(
+        db,
+        date_from=date_from,
+        date_to=date_to,
+        employee_id=current_user.employee_id,
     )

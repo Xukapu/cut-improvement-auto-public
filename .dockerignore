@@ -1,0 +1,17 @@
+**
+!alembic.ini
+!pyproject.toml
+!backend/
+!backend/app/
+!backend/app/**
+!frontend/
+!frontend/index.html
+!frontend/*.json
+!frontend/vite.config.ts
+!frontend/src/
+!frontend/src/**
+!frontend/public/
+!frontend/public/**
+!scripts/
+!scripts/bootstrap_owner.py
+**/__pycache__

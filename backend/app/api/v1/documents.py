@@ -7,6 +7,7 @@ from app.schemas.document import WorkOrderDocumentData
 from app.services.document import (
     build_completion_act_pdf,
     build_work_order_pdf,
+    get_completion_act_data,
     get_work_order_document_data,
 )
 
@@ -85,17 +86,14 @@ def completion_act_pdf(
     db: DbSession,
     _current_user: StaffUser,
 ) -> Response:
-    data = get_work_order_document_data(
-        db,
-        work_order_number,
-    )
-
-    content = build_completion_act_pdf(data)
+    data, preliminary = get_completion_act_data(db, work_order_number)
+    content = build_completion_act_pdf(data, preliminary=preliminary)
 
     return Response(
         content=content,
         media_type="application/pdf",
         headers={
             "Content-Disposition": (f'inline; filename="completion_act_{work_order_number}.pdf"'),
+            "Cache-Control": "no-store",
         },
     )

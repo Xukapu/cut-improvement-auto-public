@@ -9,6 +9,7 @@ import {
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -26,10 +27,12 @@ import {
 
 import {
   createVehicle,
+  getVehicle,
   listVehicles,
   transferVehicle,
   updateVehicle,
 } from "../api/vehicles";
+import { RepairHistory } from "../components/RepairHistory";
 
 import type {
   Client,
@@ -47,8 +50,12 @@ type FormState = {
   model: string;
   year: string;
   mileage: string;
+};
 
-  owner_client_id: string;
+
+type Props = {
+  initialVehicleNumber: number | null;
+  onOpenWorkOrder: (workOrderNumber: number) => void;
 };
 
 
@@ -59,8 +66,6 @@ const emptyForm: FormState = {
   model: "",
   year: "",
   mileage: "",
-
-  owner_client_id: "",
 };
 
 
@@ -91,7 +96,94 @@ function clientLabel(
 }
 
 
-export function VehiclesPage() {
+type OwnerPickerProps = {
+  clients: Client[];
+  owner: Client | null;
+  onChange: (owner: Client | null) => void;
+  currentOwnerNumber?: number;
+};
+
+type OwnerSearchResult = { search: string; items: Client[]; error: string };
+
+function OwnerPicker({ clients, owner, onChange, currentOwnerNumber }: OwnerPickerProps) {
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState<OwnerSearchResult | null>(null);
+  const search = query.trim();
+
+  useEffect(() => {
+    if (!search) {
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      listClients(search)
+        .then(({ items }) => {
+          if (active) {
+            setResult({ search, items, error: "" });
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setResult({ search, items: [], error: getError(error) });
+          }
+        });
+    }, 200);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [search]);
+
+  const currentResult = search && result?.search === search ? result : null;
+  const matches = search ? (currentResult?.items ?? []) : clients;
+  const choices = currentOwnerNumber === undefined ? matches : matches.filter(
+    (client) => !client.sync_pending && client.client_number > 0 &&
+      client.client_number !== currentOwnerNumber,
+  );
+  const options = owner && !choices.some((client) => client.id === owner.id)
+    ? [owner, ...choices]
+    : choices;
+
+  return (
+    <>
+      <label className="form-wide">
+        <span>Поиск владельца</span>
+        <input
+          type="search"
+          maxLength={200}
+          placeholder="Имя, телефон или номер клиента"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      <label className="form-wide">
+        <span>{currentOwnerNumber === undefined ? "Владелец *" : "Новый владелец"}</span>
+        <select
+          required
+          value={owner?.id ?? ""}
+          onChange={(event) => onChange(
+            options.find((client) => client.id === event.target.value) ?? null,
+          )}
+        >
+          <option value="">Выберите клиента</option>
+          {options.map((client) => (
+            <option key={client.id} value={client.id}>{clientLabel(client)}</option>
+          ))}
+        </select>
+      </label>
+      {search && !currentResult && <small className="form-wide" role="status">Ищем клиентов…</small>}
+      {currentResult?.error && <small className="form-wide" role="alert">{currentResult.error}</small>}
+      {currentResult && !currentResult.error && choices.length === 0 && (
+        <small className="form-wide" role="status">Клиенты не найдены.</small>
+      )}
+    </>
+  );
+}
+
+
+export function VehiclesPage({ initialVehicleNumber, onOpenWorkOrder }: Props) {
   const [
     items,
     setItems,
@@ -108,6 +200,11 @@ export function VehiclesPage() {
   ] = useState<Vehicle | null>(
     null,
   );
+
+  const [requestedVehicle, setRequestedVehicle] = useState(initialVehicleNumber);
+  const [cardError, setCardError] = useState("");
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const selectedVehicleNumber = selected?.vehicle_number;
 
   const [
     search,
@@ -153,10 +250,44 @@ export function VehiclesPage() {
     setTransferOpen,
   ] = useState(false);
 
-  const [
-    newOwnerNumber,
-    setNewOwnerNumber,
-  ] = useState("");
+  const [owner, setOwner] = useState<Client | null>(null);
+
+
+  useEffect(() => {
+    if (requestedVehicle === null) {
+      return;
+    }
+
+    let active = true;
+
+    getVehicle(requestedVehicle)
+      .then((vehicle) => {
+        if (active) {
+          setSelected((current) => current ?? vehicle);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setCardError(getError(error));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setRequestedVehicle(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [requestedVehicle]);
+
+
+  useEffect(() => {
+    if (initialVehicleNumber !== null && selectedVehicleNumber === initialVehicleNumber) {
+      detailHeadingRef.current?.focus();
+    }
+  }, [initialVehicleNumber, selectedVehicleNumber]);
 
 
   const refresh =
@@ -271,16 +402,11 @@ export function VehiclesPage() {
 
 
   function openCreate() {
+    setRequestedVehicle(null);
+    setCardError("");
     setEditing(null);
-
-    setForm({
-      ...emptyForm,
-
-      owner_client_id:
-        clients[0]?.id ??
-        "",
-    });
-
+    setOwner(null);
+    setForm(emptyForm);
     setFormOpen(true);
   }
 
@@ -295,14 +421,6 @@ export function VehiclesPage() {
     setEditing(
       vehicle,
     );
-
-    const owner =
-      clients.find(
-        (client) =>
-          client.client_number ===
-          vehicle
-            .current_owner_client_number,
-      );
 
     setForm({
       license_plate:
@@ -331,10 +449,6 @@ export function VehiclesPage() {
               vehicle.mileage,
             )
           : "",
-
-      owner_client_id:
-        owner?.id ??
-        "",
     });
 
     setFormOpen(true);
@@ -395,14 +509,6 @@ export function VehiclesPage() {
             base,
           );
       } else {
-        const owner =
-          clients.find(
-            (client) =>
-              client.id ===
-              form
-                .owner_client_id,
-          );
-
         if (!owner) {
           throw new ApiError(
             0,
@@ -457,21 +563,21 @@ export function VehiclesPage() {
     if (
       !selected ||
       selected.sync_pending ||
-      !newOwnerNumber
+      !owner ||
+      owner.sync_pending ||
+      saving
     ) {
       return;
     }
 
-
+    setSaving(true);
     try {
       const result =
         await transferVehicle(
           selected
             .vehicle_number,
 
-          Number(
-            newOwnerNumber,
-          ),
+          owner.client_number,
         );
 
       setSelected(
@@ -482,10 +588,6 @@ export function VehiclesPage() {
         false,
       );
 
-      setNewOwnerNumber(
-        "",
-      );
-
       await refresh();
     } catch (transferError) {
       setError(
@@ -493,17 +595,10 @@ export function VehiclesPage() {
           transferError,
         ),
       );
+    } finally {
+      setSaving(false);
     }
   }
-
-
-  const transferableClients =
-    clients.filter(
-      (client) =>
-        !client.sync_pending &&
-        client.client_number >
-          0,
-    );
 
 
   return (
@@ -597,6 +692,8 @@ export function VehiclesPage() {
                       vehicle.id
                     }
                     onClick={() => {
+                      setRequestedVehicle(null);
+                      setCardError("");
                       setSelected(
                         vehicle,
                       );
@@ -645,12 +742,12 @@ export function VehiclesPage() {
               <Car size={34} />
 
               <strong>
-                Выбери автомобиль
+                {requestedVehicle !== null
+                  ? "Открываем автомобиль…"
+                  : "Выбери автомобиль"}
               </strong>
 
-              <span>
-                Здесь откроется его карточка.
-              </span>
+              {cardError && <span role="alert">{cardError}</span>}
             </div>
           ) : (
             <>
@@ -663,7 +760,7 @@ export function VehiclesPage() {
                     )}
                   </span>
 
-                  <h2>
+                  <h2 ref={detailHeadingRef} tabIndex={-1}>
                     {selected.brand}{" "}
                     {selected.model}
                   </h2>
@@ -763,6 +860,14 @@ export function VehiclesPage() {
                 </div>
               </dl>
 
+              {!selected.sync_pending && selected.vehicle_number > 0 && (
+                <RepairHistory
+                  key={selected.vehicle_number}
+                  scope="vehicle"
+                  recordNumber={selected.vehicle_number}
+                  onOpenWorkOrder={onOpenWorkOrder}
+                />
+              )}
 
               <div className="detail-actions">
                 <button
@@ -774,13 +879,7 @@ export function VehiclesPage() {
                     )
                   }
                   onClick={() => {
-                    setNewOwnerNumber(
-                      String(
-                        selected
-                          .current_owner_client_number,
-                      ),
-                    );
-
+                    setOwner(null);
                     setTransferOpen(
                       true,
                     );
@@ -965,45 +1064,7 @@ export function VehiclesPage() {
 
 
               {!editing && (
-                <label className="form-wide">
-                  <span>
-                    Владелец *
-                  </span>
-
-                  <select
-                    required
-                    value={
-                      form
-                        .owner_client_id
-                    }
-                    onChange={(event) => {
-                      setForm({
-                        ...form,
-
-                        owner_client_id:
-                          event.target
-                            .value,
-                      });
-                    }}
-                  >
-                    {clients.map(
-                      (client) => (
-                        <option
-                          key={
-                            client.id
-                          }
-                          value={
-                            client.id
-                          }
-                        >
-                          {clientLabel(
-                            client,
-                          )}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </label>
+                <OwnerPicker clients={clients} owner={owner} onChange={setOwner} />
               )}
             </div>
 
@@ -1055,52 +1116,19 @@ export function VehiclesPage() {
                 </h2>
               </div>
 
-              <label className="single-field">
-                <span>
-                  Новый владелец
-                </span>
-
-                <select
-                  value={
-                    newOwnerNumber
-                  }
-                  onChange={(event) => {
-                    setNewOwnerNumber(
-                      event.target
-                        .value,
-                    );
-                  }}
-                >
-                  {transferableClients.map(
-                    (client) => (
-                      <option
-                        key={
-                          client.id
-                        }
-                        value={
-                          client
-                            .client_number
-                        }
-                      >
-                        №
-                        {
-                          client
-                            .client_number
-                        }{" "}
-                        ·{" "}
-                        {
-                          client
-                            .full_name
-                        }
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
+              <div className="form-grid">
+                <OwnerPicker
+                  clients={clients}
+                  owner={owner}
+                  onChange={setOwner}
+                  currentOwnerNumber={selected.current_owner_client_number}
+                />
+              </div>
 
               <div className="modal-actions">
                 <button
                   className="secondary-button"
+                  disabled={saving}
                   onClick={() => {
                     setTransferOpen(
                       false,
@@ -1113,16 +1141,13 @@ export function VehiclesPage() {
 
                 <button
                   className="primary-inline-button"
-                  disabled={
-                    transferableClients
-                      .length === 0
-                  }
+                  disabled={!owner || saving}
                   onClick={() => {
                     void doTransfer();
                   }}
                   type="button"
                 >
-                  Сменить владельца
+                  {saving ? "Сохраняем…" : "Сменить владельца"}
                 </button>
               </div>
             </div>
