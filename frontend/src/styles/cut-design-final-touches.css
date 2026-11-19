@@ -1,0 +1,185 @@
+/* CUT Improvement Auto | design revision 2026-11-05
+   1. Compact masthead on both themes.
+   2. The duplicate sidebar branding is removed in App.tsx, not hidden.
+   3. Light automotive welcome image from the approved concept.
+   4. Navy accent stripes on light surfaces, with readable light cards.
+   Imported last. No API, business logic or release state changes. */
+
+@media (min-width:761px) {
+  html[data-cut-theme] .cut-modern-app {
+    grid-template-rows: 70px minmax(0, 1fr);
+  }
+  html[data-cut-theme] .cut-modern-app > .sidebar {
+    min-height: calc(100vh - 70px);
+    padding-top: 16px;
+  }
+}
+
+html[data-cut-theme] .cut-masthead,
+html[data-cut-theme="dark"] .cut-masthead {
+  gap: 17px;
+  padding: 6px 22px;
+}
+html[data-cut-theme] .cut-masthead-logo,
+html[data-cut-theme="dark"] .cut-masthead-logo {
+  flex: 0 0 168px;
+  width: 168px;
+  height: 51px;
+  padding: 4px 7px;
+  border-radius: 9px;
+}
+html[data-cut-theme="dark"] .cut-masthead-logo {
+  background: transparent;
+}
+html[data-cut-theme] .cut-masthead-title,
+html[data-cut-theme="dark"] .cut-masthead-title {
+  gap: 3px;
+  padding-left: 18px;
+}
+html[data-cut-theme] .cut-masthead-title strong,
+html[data-cut-theme="dark"] .cut-masthead-title strong {
+  font-size: clamp(18px, 1.65vw, 25px);
+  letter-spacing: -.028em;
+}
+html[data-cut-theme] .cut-masthead-title small,
+html[data-cut-theme="dark"] .cut-masthead-title small {
+  font-size: 9px;
+  letter-spacing: .18em;
+}
+html[data-cut-theme] .cut-masthead-controls {gap: 10px;}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher {padding: 3px; border-radius: 10px;}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 11px;
+  border-radius: 8px;
+}
+html[data-cut-theme] .cut-masthead-caption {font-size: 10px;}
+
+/* The light dashboard keeps its cream/white canvas but receives crisp
+   dark navy accents analogous to the Night Drive decorative lines. */
+html[data-cut-theme="light"] .cut-masthead {
+  border-bottom: 2px solid #263b53;
+  background:
+    linear-gradient(163deg, transparent 64%, rgba(27,51,78,.07) 64.5%, transparent 66%),
+    linear-gradient(110deg,#fff 0%,#f9fafb 100%);
+}
+html[data-cut-theme="light"] .cut-modern-app > .sidebar {
+  background:
+    linear-gradient(163deg,transparent 65%,rgba(255,177,52,.18) 65.4%,transparent 67%),
+    linear-gradient(164deg,#0a1b2d 0%,#102840 76%,#0b1c30 100%);
+}
+html[data-cut-theme="light"] .cut-modern-app .main-content {
+  background:
+    linear-gradient(163deg,transparent 0 86%,rgba(28,54,79,.045) 86.15%,transparent 86.55%),
+    linear-gradient(138deg,#f8f6f2,#f4f1eb 70%,#f7f5f1);
+}
+html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+  min-height: 130px;
+  padding: 18px 22px;
+  border: 1px solid #d8dce1;
+  border-left: 5px solid #f0a32e;
+  color: #192d43;
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,1) 0%,
+      rgba(255,255,255,.98) 37%,
+      rgba(255,255,255,.80) 54%,
+      rgba(255,255,255,.06) 100%),
+    url('/cut-night-assets/approved-light-hero.jpg') right center / auto 160% no-repeat,
+    #fdfaf5;
+  box-shadow: 0 9px 24px rgba(26,46,67,.10), inset 3px 0 9px -6px rgba(244,154,29,.45);
+}
+html[data-cut-theme="light"] .cut-welcome-copy {
+  max-width: min(670px,72%);
+}
+html[data-cut-theme="light"] .cut-welcome-copy p {
+  color: #516173;
+}
+html[data-cut-theme="light"] .cut-modern-app .metric-card {
+  border-top: 3px solid #263e58;
+  background: linear-gradient(170deg,#fff 0%,#fff 82%,#f8fafb 100%);
+  box-shadow: 0 7px 19px rgba(26,46,67,.075);
+}
+html[data-cut-theme="light"] .cut-modern-app .workspace-card,
+html[data-cut-theme="light"] .cut-modern-app .attention-panel {
+  border-top: 4px solid #263e58;
+  background: linear-gradient(170deg,#fff,#fdfdfc);
+  box-shadow: 0 8px 21px rgba(26,46,67,.07);
+}
+html[data-cut-theme="light"] .cut-modern-app .card-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d5dee6;
+}
+html[data-cut-theme="light"] .cut-modern-app .card-kicker {
+  color: #aa5c11;
+}
+
+/* All page tabs retain their existing functional controls. */
+@media (max-width:1360px) and (min-width:761px) {
+  html[data-cut-theme] .cut-masthead-logo,
+  html[data-cut-theme="dark"] .cut-masthead-logo {
+    flex-basis: 145px;
+    width: 145px;
+    height: 47px;
+  }
+  html[data-cut-theme] .cut-masthead-title,
+  html[data-cut-theme="dark"] .cut-masthead-title {padding-left: 12px;}
+}
+@media (max-width:1040px) and (min-width:761px) {
+  html[data-cut-theme] .cut-masthead-title strong,
+  html[data-cut-theme="dark"] .cut-masthead-title strong {font-size: 18px;}
+  html[data-cut-theme] .cut-masthead-caption {display:none;}
+}
+@media (max-width:760px) {
+  html[data-cut-theme] .cut-masthead,
+  html[data-cut-theme="dark"] .cut-masthead {
+    gap: 7px 10px;
+    padding: 9px 12px;
+  }
+  html[data-cut-theme] .cut-masthead-logo,
+  html[data-cut-theme="dark"] .cut-masthead-logo {
+    flex: 0 0 105px;
+    width: 105px;
+    height: 40px;
+    padding: 2px 4px;
+  }
+  html[data-cut-theme] .cut-masthead-title,
+  html[data-cut-theme="dark"] .cut-masthead-title {
+    flex: 1 1 155px;
+    padding-left: 9px;
+  }
+  html[data-cut-theme] .cut-masthead-title strong,
+  html[data-cut-theme="dark"] .cut-masthead-title strong {
+    font-size: 16px;
+    white-space: normal;
+  }
+  html[data-cut-theme] .cut-masthead-title small,
+  html[data-cut-theme="dark"] .cut-masthead-title small {
+    font-size: 8px;
+    letter-spacing: .06em;
+  }
+  html[data-cut-theme] .cut-masthead-controls {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  html[data-cut-theme] .cut-modern-app > .sidebar {padding: 8px 12px;}
+  html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+    background:
+      linear-gradient(90deg,rgba(255,255,255,1) 0%,rgba(255,255,255,.95) 60%,rgba(255,255,255,.40) 100%),
+      url('/cut-night-assets/approved-light-hero.jpg') right center / auto 125% no-repeat,
+      #fff;
+  }
+  html[data-cut-theme="light"] .cut-welcome-copy {max-width: 88%;}
+}
+@media (max-width:520px) {
+  html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+    background:
+      linear-gradient(90deg,rgba(255,255,255,.96),rgba(255,255,255,.85)),
+      url('/cut-night-assets/approved-light-hero.jpg') right center / auto 100% no-repeat,
+      #fff;
+  }
+  html[data-cut-theme="light"] .cut-welcome-copy {max-width: 100%;}
+  html[data-cut-theme] .cut-masthead .cut-theme-switcher button {min-height:30px;padding:0 8px;}
+}

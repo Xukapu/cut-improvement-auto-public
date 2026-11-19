@@ -1,0 +1,265 @@
+/* CUT Improvement Auto - approved matched Night / Light v3, 2026-11-05.
+   Geometry is SHARED between themes. Only pigments and background art differ.
+   Imported LAST after previous design layers. No mock data or backend changes. */
+
+/* One grid, one header size and one set of dashboard measurements. */
+@media (min-width:761px) {
+  html[data-cut-theme] .cut-modern-app {
+    grid-template-columns: 255px minmax(0,1fr);
+    grid-template-rows: 65px minmax(0,1fr);
+  }
+  html[data-cut-theme] .cut-modern-app > .sidebar {
+    min-height:calc(100vh - 65px);
+  }
+}
+html[data-cut-theme] .cut-masthead,
+html[data-cut-theme="dark"] .cut-masthead {
+  gap:16px;
+  min-height:65px;
+  padding:5px 20px;
+}
+html[data-cut-theme] .cut-masthead-logo,
+html[data-cut-theme="dark"] .cut-masthead-logo {
+  flex:0 0 148px;
+  width:148px;
+  height:47px;
+  padding:3px 5px;
+  border-radius:8px;
+}
+html[data-cut-theme] .cut-masthead-title,
+html[data-cut-theme="dark"] .cut-masthead-title {
+  gap:3px;
+  padding-left:16px;
+}
+html[data-cut-theme] .cut-masthead-title strong,
+html[data-cut-theme="dark"] .cut-masthead-title strong {
+  font-size:clamp(18px,1.6vw,25px);
+  letter-spacing:-.025em;
+}
+html[data-cut-theme] .cut-masthead-title small,
+html[data-cut-theme="dark"] .cut-masthead-title small {font-size:9px;letter-spacing:.14em}
+html[data-cut-theme] .cut-masthead-controls {gap:10px;z-index:2}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher {padding:3px;border-radius:10px}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher button {min-height:31px;padding:0 10px;font-size:11px;border-radius:8px}
+html[data-cut-theme] .cut-masthead-caption {font-size:10px}
+
+/* Company branding appears only in the full-width masthead.
+   Defensive rule supports both earlier React variants (with and without sidebar brand). */
+html[data-cut-theme] .cut-modern-app > .sidebar .brand,
+html[data-cut-theme] .cut-modern-app > .sidebar .cut-sidebar-logo,
+html[data-cut-theme] .cut-modern-app > .sidebar .cut-sidebar-brandname {display:none!important}
+html[data-cut-theme] .cut-modern-app > .sidebar {
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  padding-top:15px;
+  background:linear-gradient(166deg,#081728 0%,#0c243a 76%,#071725 100%);
+}
+html[data-cut-theme] .cut-modern-app > .sidebar :is(.sidebar-nav,.sidebar-footer) {position:relative;z-index:2}
+html[data-cut-theme] .cut-modern-app > .sidebar .sidebar-nav {gap:7px;margin-top:2px}
+html[data-cut-theme] .cut-modern-app > .sidebar .nav-item {min-height:43px;padding:9px 13px}
+/* Two unmistakable gold racing stripes, climbing the bottom of the sidebar. */
+html[data-cut-theme] .cut-modern-app > .sidebar::before,
+html[data-cut-theme] .cut-modern-app > .sidebar::after {
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:-45px;
+  bottom:43px;
+  width:370px;
+  height:15px;
+  border-radius:999px;
+  pointer-events:none;
+  transform:rotate(-17deg);
+  background:linear-gradient(90deg,transparent 0%,#ee9315 23%,#ffcf63 66%,#f5a112 100%);
+  box-shadow:0 0 14px rgb(255 156 24 / 30%);
+}
+html[data-cut-theme] .cut-modern-app > .sidebar::after {
+  bottom:27px;
+  left:-35px;
+  height:5px;
+  opacity:.85;
+  background:linear-gradient(90deg,transparent,#ffd06b 70%,#f3a323);
+}
+
+html[data-cut-theme] .cut-modern-app .main-content {padding:17px 23px 36px}
+html[data-cut-theme] .cut-modern-app .topbar {margin-bottom:13px}
+html[data-cut-theme] .cut-modern-app .topbar h1 {font-size:clamp(25px,2.5vw,36px)}
+
+/* Same welcome banner height and padding in both themes. */
+html[data-cut-theme] .cut-modern-app .cut-welcome-banner,
+html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner,
+html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner {
+  position:relative;
+  isolation:isolate;
+  min-height:135px;
+  padding:17px 22px;
+  border-radius:15px;
+  border-left-width:6px;
+  overflow:hidden;
+  box-shadow:0 9px 24px rgb(0 12 27 / 17%);
+}
+html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner {
+  color:#fff;
+  border-color:#4a5970;
+  border-left-color:#ffb51b;
+  background-image:
+    linear-gradient(90deg,#0c1d32 0%,rgb(12 29 50 / 97%) 36%,rgb(12 29 50 / 74%) 54%,rgb(12 29 50 / 0%) 86%),
+    url('/cut-night-assets/cut-v3-supra-dark.webp');
+  background-color:#0a1b30;
+  background-position:center,right center;
+  background-size:100% 100%,auto 160%;
+  background-repeat:no-repeat;
+}
+html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+  color:#13263b;
+  border-color:#e1d9ca;
+  border-left-color:#f1a211;
+  background-image:
+    linear-gradient(90deg,#fff 0%,rgb(255 255 255 / 98%) 36%,rgb(255 255 255 / 77%) 54%,rgb(255 255 255 / 0%) 86%),
+    url('/cut-night-assets/cut-v3-supra-light.webp');
+  background-color:#f7f6f1;
+  background-position:center,right center;
+  background-size:100% 100%,auto 160%;
+  background-repeat:no-repeat;
+  box-shadow:0 7px 20px rgb(39 57 77 / 11%);
+}
+/* Racing streak above the bonnet. No overlay on interactive elements. */
+html[data-cut-theme] .cut-modern-app .cut-welcome-banner::before {
+  content:"";
+  position:absolute;
+  top:5px;
+  right:19%;
+  width:27%;
+  height:48px;
+  border-top:4px solid rgb(255 176 29 / 78%);
+  transform:rotate(-13deg);
+  transform-origin:right top;
+  filter:drop-shadow(0 1px 7px rgb(252 155 25 / 40%));
+  pointer-events:none;
+  z-index:0;
+}
+html[data-cut-theme] .cut-modern-app .cut-welcome-copy {position:relative;z-index:1;max-width:min(650px,64%)}
+html[data-cut-theme] .cut-modern-app .cut-welcome-copy h2 {font-size:clamp(22px,2.1vw,29px)}
+html[data-cut-theme] .cut-modern-app .cut-welcome-settings {position:relative;z-index:2}
+
+/* KPI cards: same dimensions, spacing, typography and icon placement. */
+html[data-cut-theme] .cut-modern-app .metric-grid {margin-top:13px;gap:13px}
+html[data-cut-theme] .cut-modern-app .metric-card {
+  min-height:106px;
+  padding:14px 15px;
+  gap:13px;
+  border-radius:14px;
+  border-width:1px;
+}
+html[data-cut-theme] .cut-modern-app .cut-metric-icon {flex-basis:44px;width:44px;height:44px}
+html[data-cut-theme] .cut-modern-app .metric-card strong {font-size:clamp(20px,1.95vw,27px)}
+html[data-cut-theme="light"] .cut-modern-app .metric-card {
+  border-color:#dce1e9;
+  background:linear-gradient(150deg,#fff,#fbfcff);
+  box-shadow:0 7px 17px rgb(21 40 62 / 10%);
+}
+html[data-cut-theme="dark"] .cut-modern-app .metric-card {
+  border-color:#4e6074;
+  background:linear-gradient(138deg,#192f47,#0b2037);
+  box-shadow:0 8px 20px rgb(0 0 0 / 20%),inset 0 1px rgb(255 255 255 / 8%);
+}
+
+/* Matching section geometry and dark racing headers, even in the light theme.
+   Body contents retain their light/dark readability. */
+html[data-cut-theme] .cut-modern-app .workspace-grid {gap:14px;margin-top:14px}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card {
+  overflow:hidden;
+  padding:16px;
+  border-radius:15px;
+}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header {
+  position:relative;
+  isolation:isolate;
+  min-height:100px;
+  margin:-16px -16px 15px;
+  padding:14px 17px 12px;
+  border:0;
+  border-bottom:2px solid #6c5b3e;
+  border-radius:14px 14px 0 0;
+  background:linear-gradient(135deg,#0c1c30,#17334c);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header::before {
+  content:"";
+  position:absolute;
+  right:-25px;
+  bottom:4px;
+  width:45%;
+  height:11px;
+  transform:rotate(-9deg);
+  transform-origin:right center;
+  background:linear-gradient(90deg,transparent,rgba(255,169,24,.30) 32%,#ffb134 73%,rgba(251,179,57,.06) 100%);
+  pointer-events:none;
+  z-index:0;
+}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header > * {position:relative;z-index:1}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header h3,
+html[data-cut-theme="light"] .cut-modern-app .workspace-grid > .workspace-card > .card-header h3 {color:#f7faff}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .card-kicker,
+html[data-cut-theme="light"] .cut-modern-app .workspace-grid > .workspace-card > .card-header .card-kicker {color:#ffb63d}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .dashboard-preview-date {color:#b8cbdd}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header > svg {color:#bed0dd}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .dashboard-day-switch {background:#192d42;border-color:#476078}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .dashboard-day-button:not(.dashboard-day-button-active) {color:#d0e0ef}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .secondary-button {background:#14263b;color:#f7faff;border-color:#8ca1b4}
+html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header .secondary-button:hover {background:#213f59}
+html[data-cut-theme="light"] .cut-modern-app .workspace-grid > .workspace-card {
+  background:#fff;
+  border-color:#d8dfe7;
+  box-shadow:0 8px 19px rgb(27 44 66 / 10%);
+}
+html[data-cut-theme="dark"] .cut-modern-app .workspace-grid > .workspace-card {
+  background:linear-gradient(180deg,#11283e,#0b1d31);
+  border-color:#4b6074;
+}
+html[data-cut-theme] .cut-modern-app .attention-panel {border-radius:14px}
+
+/* Keep information and controls accessible on tablets and phones. */
+@media (max-width:1120px) {
+  html[data-cut-theme] .cut-modern-app .metric-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-cut-theme] .cut-modern-app .workspace-grid {grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:930px) and (min-width:761px) {
+  html[data-cut-theme] .cut-masthead-caption {display:none}
+  html[data-cut-theme] .cut-masthead-title strong {font-size:19px}
+}
+@media (max-width:760px) {
+  html[data-cut-theme] .cut-modern-app {display:flex;flex-direction:column}
+  html[data-cut-theme] .cut-masthead {min-height:60px;gap:7px 10px;padding:8px 11px;flex-wrap:wrap}
+  html[data-cut-theme] .cut-masthead-logo {flex:0 0 105px;width:105px;height:39px}
+  html[data-cut-theme] .cut-masthead-title {padding-left:9px;flex:1 1 155px}
+  html[data-cut-theme] .cut-masthead-title strong {font-size:16px;white-space:normal}
+  html[data-cut-theme] .cut-masthead-title small {font-size:8px}
+  html[data-cut-theme] .cut-masthead-controls {width:100%;justify-content:flex-end;margin-left:0}
+  html[data-cut-theme] .cut-modern-app > .sidebar {min-height:0;padding:9px 12px;overflow:visible}
+  html[data-cut-theme] .cut-modern-app > .sidebar::before,
+  html[data-cut-theme] .cut-modern-app > .sidebar::after {display:none}
+  html[data-cut-theme] .cut-modern-app .main-content {padding:16px 12px 30px}
+  html[data-cut-theme] .cut-modern-app .cut-welcome-banner {min-height:122px;padding:15px}
+  html[data-cut-theme] .cut-modern-app .cut-welcome-copy {max-width:82%}
+  html[data-cut-theme] .cut-modern-app .cut-welcome-banner::before {display:none}
+  html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header {min-height:94px}
+  html[data-cut-theme] .cut-modern-app .metric-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px) {
+  html[data-cut-theme] .cut-modern-app .cut-welcome-copy {max-width:100%}
+  html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner {
+    background-image:linear-gradient(90deg,#102137eF,#102137dD),url('/cut-night-assets/cut-v3-supra-dark.webp');
+    background-size:100% 100%,auto 120%;
+  }
+  html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+    background-image:linear-gradient(90deg,#ffffffed,#ffffffdB),url('/cut-night-assets/cut-v3-supra-light.webp');
+    background-size:100% 100%,auto 120%;
+  }
+  html[data-cut-theme] .cut-modern-app .metric-grid {gap:9px}
+  html[data-cut-theme] .cut-modern-app .metric-card {min-height:126px;padding:12px;gap:8px}
+  html[data-cut-theme] .cut-modern-app .cut-metric-icon {flex-basis:35px;width:35px;height:35px}
+  html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card {padding:13px}
+  html[data-cut-theme] .cut-modern-app .workspace-grid > .workspace-card > .card-header {margin:-13px -13px 13px;padding:12px}
+}

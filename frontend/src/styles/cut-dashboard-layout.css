@@ -1,0 +1,640 @@
+/* CUT Improvement Auto: branded layout matching the approved Night/Light designs.
+   Loaded AFTER app.css, cut-night-drive.css and cut-light-drive.css.
+   Both themes retain all existing business behavior and real API values. */
+html[data-cut-theme] .cut-modern-app {
+  --ia-gold: #ffbc35;
+  --ia-orange: #f68b19;
+  --ia-border: #34475d;
+  --ia-main: #081625;
+  --ia-card: #12253b;
+  --ia-raised: #1a3047;
+  --ia-text: #f4f8ff;
+  --ia-subtle: #aabbd0;
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-rows: 96px minmax(0, 1fr);
+  grid-template-areas: "masthead masthead" "sidebar content";
+  min-height: 100vh;
+  background: var(--ia-main);
+}
+html[data-cut-theme="light"] .cut-modern-app {
+  --ia-border: #e3e6e9;
+  --ia-main: #f5f1e9;
+  --ia-card: #fff;
+  --ia-raised: #f8f8f8;
+  --ia-text: #202a37;
+  --ia-subtle: #6a7585;
+}
+/* Full-width branded masthead */
+html[data-cut-theme] .cut-masthead {
+  grid-area: masthead;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
+  padding: 12px 28px;
+  overflow: hidden;
+  border-bottom: 1px solid #344358;
+  background:
+    radial-gradient(ellipse 46% 70% at 60% -10%, rgba(255,167,22,.14), transparent 77%),
+    linear-gradient(110deg, #07121f, #091a2c 67%, #061322);
+  color: #f8fbff;
+}
+html[data-cut-theme="dark"] .cut-masthead::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(102deg, transparent 48%, rgba(255,153,19,.11) 65%, transparent 85%);
+}
+html[data-cut-theme="light"] .cut-masthead {
+  background: #fff;
+  border-color: #e6e5e3;
+  color: #152b43;
+}
+html[data-cut-theme] .cut-masthead-logo {
+  position: relative;
+  flex: 0 0 235px;
+  width: 235px;
+  height: 69px;
+  padding: 8px 14px;
+  object-fit: contain;
+  background: #07111e;
+  border-radius: 12px;
+}
+html[data-cut-theme] .cut-masthead-title {
+  position: relative;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding-left: 26px;
+  border-left: 1px solid rgba(255,255,255,.38);
+}
+html[data-cut-theme="light"] .cut-masthead-title {border-left-color:#ccd3d9}
+html[data-cut-theme] .cut-masthead-title strong {
+  font-size: clamp(19px, 2.25vw, 35px);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+}
+html[data-cut-theme] .cut-masthead-title strong span {color:var(--ia-gold)}
+html[data-cut-theme] .cut-masthead-title small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3em;
+  white-space: nowrap;
+}
+html[data-cut-theme] .cut-masthead-controls {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+}
+html[data-cut-theme] .cut-masthead-caption {
+  color: #b2bdc8;
+  font-size: 11px;
+  text-align: right;
+}
+html[data-cut-theme="light"] .cut-masthead-caption {color:#7c8791}
+/* Theme switch lives in the real header, not an overlay on top of data. */
+html[data-cut-theme] .cut-masthead .cut-theme-switcher,
+html[data-cut-theme] .cut-auth-theme .cut-theme-switcher {
+  position: static;
+  flex-shrink: 0;
+  z-index: auto;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #091726;
+  border: 1px solid #516079;
+  box-shadow: none;
+}
+html[data-cut-theme="light"] .cut-masthead .cut-theme-switcher {
+  background:#fff;
+  border-color:#d4dce6;
+}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher button,
+html[data-cut-theme] .cut-auth-theme .cut-theme-switcher button {
+  min-height: 35px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher button[aria-pressed="true"],
+html[data-cut-theme] .cut-auth-theme .cut-theme-switcher button[aria-pressed="true"] {
+  background: linear-gradient(#ffce6b,#f4a536);
+  color: #17263a;
+  border-color: #fbc35d;
+}
+html[data-cut-theme] .cut-masthead .cut-theme-switcher button:focus-visible,
+html[data-cut-theme] .cut-auth-theme .cut-theme-switcher button:focus-visible {
+  outline:3px solid #ffca66;
+  outline-offset:2px;
+}
+/* Sidebar: logo from the actual company business card, never recreated in CSS. */
+html[data-cut-theme] .cut-modern-app > .sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+  min-height: calc(100vh - 96px);
+  height: 100%;
+  padding: 21px 14px 18px;
+  background:
+    radial-gradient(ellipse 110% 65% at -30% 100%, rgba(247,133,23,.13),transparent 78%),
+    linear-gradient(170deg,#0c1a2b 0%,#0b1d32 100%);
+  border-right: 1px solid #32465a;
+}
+html[data-cut-theme] .cut-modern-app .brand {
+  flex-direction: row;
+  align-items: center;
+  gap: 11px;
+  padding: 0 6px 26px;
+}
+html[data-cut-theme] .cut-sidebar-logo {
+  width: 109px;
+  height: 54px;
+  flex: 0 0 109px;
+  object-fit: contain;
+}
+html[data-cut-theme] .cut-sidebar-brandname {display:grid;gap:2px;min-width:0;color:#fff}
+html[data-cut-theme] .cut-sidebar-brandname strong {font-size:22px;line-height:1;font-weight:850}
+html[data-cut-theme] .cut-sidebar-brandname span {font-size:15px;line-height:1.16;font-weight:750}
+html[data-cut-theme] .sidebar-nav {gap:7px}
+html[data-cut-theme] .nav-item {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:11px;
+  color:#e3eaf4;
+  font-size:14px;
+  font-weight:600;
+}
+html[data-cut-theme] .nav-item > svg {flex-shrink:0}
+html[data-cut-theme] .nav-item:hover {background:#233a50;color:#fff}
+html[data-cut-theme] .nav-item-active,
+html[data-cut-theme] .nav-item-active:hover {
+  color:#162132;
+  background:linear-gradient(105deg,#ffca6a,#f6a32d);
+  box-shadow:0 4px 16px rgba(229,122,13,.23);
+  font-weight:800;
+}
+html[data-cut-theme] .sidebar-footer {padding:22px 6px 10px}
+html[data-cut-theme] .sidebar-footer .connection-status {font-size:12px;line-height:1.4;color:#dce8f1}
+html[data-cut-theme] .sidebar-footer .sync-status-badge {margin-bottom:14px}
+/* Main canvas and global topbar */
+html[data-cut-theme] .cut-modern-app .main-content {
+  grid-area:content;
+  min-width:0;
+  padding:23px 27px 42px;
+  color:var(--ia-text);
+  background:
+    radial-gradient(ellipse 100% 25% at 53% 0%, rgba(29,58,90,.42), transparent 90%),
+    linear-gradient(155deg,#081727,#0b1c30 90%);
+}
+html[data-cut-theme="light"] .cut-modern-app .main-content {
+  background:linear-gradient(140deg,#f6f2ec,#f8f7f3 88%);
+}
+html[data-cut-theme] .cut-modern-app .topbar {
+  margin-bottom:17px;
+  padding-bottom:0;
+  border:0;
+  align-items:center;
+}
+html[data-cut-theme] .cut-modern-app .topbar h1 {
+  margin:0;
+  font-size:clamp(25px,2.7vw,38px);
+  letter-spacing:-.035em;
+  color:var(--ia-text);
+}
+html[data-cut-theme] .cut-modern-app .page-eyebrow {
+  margin-bottom:4px;
+  font-size:12px;
+  font-weight:800;
+  color:#fcb74f;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+html[data-cut-theme="light"] .cut-modern-app .page-eyebrow {color:#bd6512}
+html[data-cut-theme] .topbar-actions {gap:11px}
+html[data-cut-theme] .cut-modern-app .search-button {
+  min-height:40px;
+  border-radius:10px;
+  background:#0f2137;
+  border:1px solid #3e5469;
+  color:#eff5fb;
+}
+html[data-cut-theme="light"] .cut-modern-app .search-button {
+  background:#fff;border-color:#e0e3e8;color:#405066;
+}
+html[data-cut-theme] .cut-modern-app .user-menu {
+  background:transparent;
+  border:0;
+  gap:4px;
+}
+html[data-cut-theme] .cut-modern-app .user-chip {
+  background:#20364c;
+  border:1px solid #485b6c;
+}
+html[data-cut-theme="light"] .cut-modern-app .user-chip {background:#183049;color:#fff}
+/* Shared banner and dashboard metrics, with DIFFERENT hero treatment in each theme. */
+html[data-cut-theme] .cut-modern-app .cut-welcome-banner {
+  min-height:147px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  overflow:hidden;
+  padding:23px 24px;
+  border-radius:16px;
+  border:1px solid #405267;
+  border-left:5px solid #ff9e23;
+  color:#f7f9fe;
+  background:
+    linear-gradient(90deg,#102137 0%,#102137f5 44%,rgba(12,27,45,.67) 72%,rgba(9,20,35,.3) 100%),
+    url('/cut-night-assets/night-hero.jpg') right center / auto 165% no-repeat,
+    #12223a;
+  box-shadow:0 11px 25px rgba(1,8,17,.17);
+}
+html[data-cut-theme="light"] .cut-modern-app .cut-welcome-banner {
+  min-height:115px;
+  color:#2b3643;
+  border-color:#f1e5d4;
+  border-left-color:#d67b20;
+  background:linear-gradient(108deg,#fff,#fff8ec 86%);
+  box-shadow:0 6px 16px rgba(43,53,63,.05);
+}
+html[data-cut-theme] .cut-welcome-copy {position:relative;z-index:1;max-width:min(630px,80%)}
+html[data-cut-theme] .cut-kicker {display:flex;align-items:center;gap:7px;color:#ffb63b;font-size:12px;font-weight:900;letter-spacing:.03em}
+html[data-cut-theme="light"] .cut-kicker {color:#b96214}
+html[data-cut-theme] .cut-welcome-copy h2 {margin:5px 0 5px;font-size:clamp(22px,2.2vw,30px);line-height:1.14;letter-spacing:-.035em}
+html[data-cut-theme] .cut-welcome-copy p {margin:0;font-size:14px;color:#d0dbea;line-height:1.5}
+html[data-cut-theme="light"] .cut-welcome-copy p {color:#6e7783}
+html[data-cut-theme] .cut-welcome-settings {
+  z-index:1;
+  display:grid;place-items:center;
+  flex:0 0 42px;width:42px;height:42px;
+  color:#ffbf4e;
+  border:1px solid #ac691c;
+  border-radius:12px;
+  background:rgba(71,48,30,.54);
+}
+html[data-cut-theme="light"] .cut-welcome-settings {
+  background:#fff1dd;color:#c77217;border-color:#f2d7b9;
+}
+html[data-cut-theme] .cut-modern-app .metric-grid {gap:14px;margin-top:15px}
+html[data-cut-theme] .cut-modern-app .metric-card {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:110px;
+  padding:17px;
+  border-radius:15px;
+  border:1px solid var(--ia-border);
+  background:linear-gradient(125deg,#1b3046,#102238);
+  box-shadow:0 8px 19px rgba(1,8,17,.1);
+}
+html[data-cut-theme="light"] .cut-modern-app .metric-card {
+  background:#fff;
+  box-shadow:0 5px 14px rgba(29,40,53,.045);
+}
+html[data-cut-theme] .cut-metric-icon {
+  display:grid;place-items:center;
+  flex:0 0 45px;width:45px;height:45px;
+  background:rgba(228,128,28,.18);
+  border:1px solid rgba(235,149,42,.2);
+  border-radius:12px;
+  color:#ffb137;
+}
+html[data-cut-theme="light"] .cut-metric-icon {background:#fff2df;border-color:#f5e5cd;color:#cb761e}
+html[data-cut-theme] .cut-modern-app .metric-card > div:last-child {min-width:0}
+html[data-cut-theme] .cut-modern-app .metric-card .metric-label {font-size:12px;font-weight:750;color:var(--ia-text)}
+html[data-cut-theme] .cut-modern-app .metric-card strong {margin:6px 0 2px;color:var(--ia-text);font-size:clamp(19px,2vw,28px);letter-spacing:-.02em}
+html[data-cut-theme] .cut-modern-app .metric-card strong.money-value {font-size:clamp(18px,1.8vw,25px)!important}
+html[data-cut-theme] .cut-modern-app .metric-card .metric-note {font-size:11px;color:var(--ia-subtle)}
+/* Work area and attention are intentionally placed in mockup order. */
+html[data-cut-theme] .cut-modern-app .workspace-grid {
+  grid-template-columns:minmax(0,1.5fr) minmax(315px,.86fr);
+  gap:14px;
+  margin-top:15px;
+}
+html[data-cut-theme] .cut-modern-app .workspace-card,
+html[data-cut-theme] .cut-modern-app .attention-panel {
+  border:1px solid var(--ia-border);
+  background:linear-gradient(122deg,#1a2e44,#0d1f34);
+  border-radius:15px;
+  padding:20px;
+  box-shadow:0 9px 23px rgba(1,8,17,.09);
+}
+html[data-cut-theme="light"] .cut-modern-app .workspace-card,
+html[data-cut-theme="light"] .cut-modern-app .attention-panel {
+  background:#fff;
+  box-shadow:0 6px 17px rgba(29,40,53,.045);
+}
+html[data-cut-theme] .cut-modern-app .card-header {margin-bottom:14px}
+html[data-cut-theme] .cut-modern-app .card-header h3,
+html[data-cut-theme] .cut-modern-app .attention-header h2 {font-size:21px;line-height:1.2;color:var(--ia-text)}
+html[data-cut-theme] .cut-modern-app .card-kicker {color:#ffac3e;font-size:11px;font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+html[data-cut-theme="light"] .cut-modern-app .card-kicker {color:#b36b19}
+html[data-cut-theme] .cut-modern-app .dashboard-day-switch {background:#1a3148;border:1px solid #384a5e}
+html[data-cut-theme] .cut-modern-app .dashboard-day-button-active {background:linear-gradient(105deg,#f8c363,#f4a237);color:#1c2b38}
+html[data-cut-theme="light"] .cut-modern-app .dashboard-day-switch {background:#f4f5f5;border-color:#e9e5df}
+html[data-cut-theme] .cut-modern-app .dashboard-preview-date {font-size:11px;color:var(--ia-subtle)}
+html[data-cut-theme] .cut-modern-app .appointment-row {min-height:75px;border-bottom-color:var(--ia-border);gap:14px}
+html[data-cut-theme] .cut-modern-app .appointment-time {color:var(--ia-text);font-size:19px}
+html[data-cut-theme] .cut-modern-app .appointment-main strong {color:var(--ia-text);font-size:14px}
+html[data-cut-theme] .cut-modern-app .appointment-main span {color:var(--ia-subtle);font-size:11px}
+html[data-cut-theme] .cut-modern-app .appointment-main small {color:var(--ia-subtle);font-size:11px}
+html[data-cut-theme] .cut-modern-app .appointment-number {color:var(--ia-subtle);font-size:10px}
+html[data-cut-theme] .cut-modern-app .vehicle-now-heading {color:var(--ia-subtle);font-size:11px}
+html[data-cut-theme] .cut-modern-app .vehicle-now-row {border:1px solid transparent;background:var(--ia-raised);padding:10px 12px;border-radius:9px}
+html[data-cut-theme] .cut-modern-app .vehicle-now-row strong {font-size:12px;color:var(--ia-text)}
+html[data-cut-theme] .cut-modern-app .vehicle-now-row span,
+html[data-cut-theme] .cut-modern-app .vehicle-now-row small {color:var(--ia-subtle)}
+html[data-cut-theme] .cut-modern-app .vehicle-now-heading span {background:var(--ia-raised);color:var(--ia-text)}
+html[data-cut-theme] .cut-vehicle-shortcuts {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+html[data-cut-theme] .cut-vehicle-shortcuts button {
+  min-height:39px;padding:7px 9px;border-radius:10px;
+  font-size:12px;font-weight:800;white-space:nowrap;
+}
+html[data-cut-theme] .cut-action-primary {
+  color:#172234;
+  background:linear-gradient(105deg,#ffcc6a,#ef901b);
+  border:1px solid #e8941f;
+  box-shadow:0 4px 11px rgba(224,117,11,.16);
+}
+html[data-cut-theme] .cut-action-secondary {color:var(--ia-text);border:1px solid #708095;background:transparent}
+html[data-cut-theme="light"] .cut-action-secondary {border-color:#d4dbe1}
+html[data-cut-theme] .cut-modern-app .attention-panel {margin-top:16px;padding:18px 20px}
+html[data-cut-theme] .cut-modern-app .attention-list {grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+html[data-cut-theme] .cut-modern-app .attention-item,
+html[data-cut-theme] .cut-modern-app .attention-calm {min-height:60px;padding:10px 14px;background:var(--ia-raised);color:var(--ia-text)}
+html[data-cut-theme] .cut-modern-app .attention-item-warning {background:#382c29;border:1px solid #855027}
+html[data-cut-theme="light"] .cut-modern-app .attention-item-warning {background:#fff0df;border-color:#f2d2aa}
+html[data-cut-theme] .cut-modern-app .attention-item > div strong,
+html[data-cut-theme] .cut-modern-app .attention-calm > div strong {color:var(--ia-text);font-size:12px}
+html[data-cut-theme] .cut-modern-app .attention-item > div span,
+html[data-cut-theme] .cut-modern-app .attention-calm > div span {font-size:11px;color:var(--ia-subtle)}
+html[data-cut-theme] .cut-modern-app .refresh-button,
+html[data-cut-theme] .cut-modern-app .secondary-button {
+  color:var(--ia-text);border-color:#738094;background:transparent;
+  border-radius:9px;min-height:36px;
+}
+html[data-cut-theme="light"] .cut-modern-app .refresh-button,
+html[data-cut-theme="light"] .cut-modern-app .secondary-button {border-color:#d5dce3}
+html[data-cut-theme] .cut-modern-app .refresh-button:hover,
+html[data-cut-theme] .cut-modern-app .secondary-button:hover {background:rgba(244,162,37,.14)}
+html[data-cut-theme] .cut-modern-app .empty-state {background:var(--ia-raised);color:var(--ia-subtle)}
+html[data-cut-theme] .cut-modern-app .empty-state strong {color:var(--ia-text)}
+/* Common controls in other pages retain readable font sizes and functional states. */
+html[data-cut-theme] .cut-modern-app :is(button,input,select,textarea):focus-visible {outline:2px solid #f7b446;outline-offset:2px}
+html[data-cut-theme] .cut-modern-app :is(.data-card,.detail-card,.wo-list-panel,.wo-detail-panel,.reports-period-card,.report-section-card,.notifications-panel,.settings-card) {border-radius:14px}
+/* Login theme selector in a reserved corner; does not overlay login inputs. */
+html[data-cut-theme] .auth-page {position:relative}
+html[data-cut-theme] .cut-auth-theme {position:absolute;top:18px;right:18px;z-index:10}
+html[data-cut-theme] .cut-auth-brand-logo {
+  object-fit:contain;
+  display:block;
+  width:165px;height:70px;
+  border-radius:9px;
+  background:#0c1b2d;
+  padding:8px;
+}
+html[data-cut-theme] .auth-loading .cut-auth-brand-logo {width:182px}
+@media (max-width:1360px) {
+  html[data-cut-theme] .cut-masthead-logo {flex-basis:190px;width:190px;height:64px}
+  html[data-cut-theme] .cut-masthead-title {padding-left:18px}
+  html[data-cut-theme] .cut-masthead-caption {display:none}
+  html[data-cut-theme] .cut-modern-app {grid-template-columns:248px minmax(0,1fr)}
+  html[data-cut-theme] .cut-modern-app .main-content {padding:22px 20px 35px}
+}
+@media (max-width:1120px) {
+  html[data-cut-theme] .cut-masthead-title strong {font-size:22px}
+  html[data-cut-theme] .cut-masthead-title small {font-size:9px;letter-spacing:.16em}
+  html[data-cut-theme] .cut-modern-app .metric-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-cut-theme] .cut-modern-app .workspace-grid {grid-template-columns:1fr}
+}
+@media (max-width:760px) {
+  html[data-cut-theme] .cut-modern-app {
+    display:flex;flex-direction:column;min-height:100vh;
+  }
+  html[data-cut-theme] .cut-masthead {flex-wrap:wrap;gap:9px 14px;padding:12px 14px}
+  html[data-cut-theme] .cut-masthead-logo {flex:0 0 112px;width:112px;height:47px;padding:5px}
+  html[data-cut-theme] .cut-masthead-title {padding-left:10px;min-width:0;flex:1 1 130px}
+  html[data-cut-theme] .cut-masthead-title strong {font-size:18px;white-space:normal}
+  html[data-cut-theme] .cut-masthead-title small {font-size:8px;letter-spacing:.07em;white-space:normal}
+  html[data-cut-theme] .cut-masthead-controls {margin-left:0;width:100%;justify-content:flex-end}
+  html[data-cut-theme] .cut-modern-app > .sidebar {position:static;min-height:auto;height:auto;padding:10px 12px}
+  html[data-cut-theme] .cut-modern-app .brand {padding:0 4px 9px}
+  html[data-cut-theme] .cut-sidebar-logo {flex-basis:93px;width:93px;height:35px}
+  html[data-cut-theme] .cut-sidebar-brandname strong {font-size:15px}
+  html[data-cut-theme] .cut-sidebar-brandname span {display:none}
+  html[data-cut-theme] .sidebar-nav {grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  html[data-cut-theme] .nav-item {min-width:0;min-height:51px;display:grid;place-items:center;padding:5px;font-size:0;gap:0}
+  html[data-cut-theme] .nav-item svg {width:21px;height:21px}
+  html[data-cut-theme] .sidebar-footer {display:none}
+  html[data-cut-theme] .cut-modern-app .main-content {padding:18px 13px 32px}
+  html[data-cut-theme] .cut-modern-app .topbar {gap:10px;align-items:flex-start}
+  html[data-cut-theme] .cut-modern-app .topbar h1 {font-size:25px}
+  html[data-cut-theme] .cut-modern-app .cut-welcome-banner {min-height:122px;padding:16px}
+  html[data-cut-theme] .cut-welcome-copy {max-width:90%}
+  html[data-cut-theme] .cut-welcome-copy h2 {font-size:21px}
+  html[data-cut-theme] .cut-welcome-copy p {font-size:12px}
+  html[data-cut-theme] .cut-modern-app .metric-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-cut-theme] .cut-modern-app .workspace-card,
+  html[data-cut-theme] .cut-modern-app .attention-panel {padding:14px}
+}
+@media (max-width:520px) {
+  html[data-cut-theme] .cut-modern-app .metric-grid {gap:9px;grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-cut-theme] .cut-modern-app .metric-card {display:grid;gap:8px;min-height:126px;padding:12px}
+  html[data-cut-theme] .cut-metric-icon {width:35px;height:35px;flex-basis:35px}
+  html[data-cut-theme] .cut-metric-icon svg {width:19px;height:19px}
+  html[data-cut-theme] .cut-modern-app .metric-card strong {font-size:21px}
+  html[data-cut-theme] .cut-modern-app .metric-card .metric-label {font-size:11px}
+  html[data-cut-theme] .cut-modern-app .metric-card .metric-note {font-size:10px}
+  html[data-cut-theme] .cut-masthead-logo {flex-basis:90px;width:90px;height:40px}
+  html[data-cut-theme] .cut-masthead-title strong {font-size:16px}
+  html[data-cut-theme] .cut-modern-app .search-button {min-width:36px;padding:8px}
+  html[data-cut-theme] .cut-welcome-settings {display:none}
+  html[data-cut-theme] .cut-welcome-copy {max-width:100%}
+  html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner {background:linear-gradient(90deg,#102137,#172d46)}
+  html[data-cut-theme] .cut-auth-theme {right:8px;top:8px}
+  html[data-cut-theme] .cut-auth-theme .cut-theme-switcher button {padding:0 8px}
+  html[data-cut-theme] .cut-vehicle-shortcuts {grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-cut-theme] .cut-modern-app * {scroll-behavior:auto}
+}
+
+/* =============================================================
+   CUT Improvement Auto / approved Night Drive visual refinement
+   These changes affect the DARK theme only. LIGHT remains unchanged.
+   No business data, page handlers or API interactions are altered.
+   ============================================================= */
+@media (min-width:761px) {
+  html[data-cut-theme="dark"] .cut-modern-app {
+    grid-template-rows: 87px minmax(0, 1fr);
+  }
+  html[data-cut-theme="dark"] .cut-modern-app > .sidebar {
+    min-height:calc(100vh - 87px);
+  }
+}
+
+html[data-cut-theme="dark"] .cut-masthead {
+  padding:9px 25px;
+  border-bottom-color:#405166;
+  background:
+    radial-gradient(ellipse 23% 20% at 65% 27%, rgba(255,169,46,.29), transparent 76%),
+    radial-gradient(ellipse 32% 110% at 79% -35%, rgba(26,62,99,.45), transparent 70%),
+    linear-gradient(104deg,#081321 0%,#0a1a2d 48%,#091827 100%);
+  box-shadow: inset 0 -1px 0 rgba(255,177,49,.12);
+}
+html[data-cut-theme="dark"] .cut-masthead::before {
+  background:
+    linear-gradient(176deg, transparent 0 54%, rgba(255,159,32,.0) 55%, rgba(255,149,21,.41) 57%, rgba(255,159,32,.0) 60%, transparent 100%);
+  opacity:.64;
+}
+html[data-cut-theme="dark"] .cut-masthead::after {
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:34%; left:49%; width:31%; height:38%;
+  pointer-events:none;
+  border-top:1px solid rgba(255,167,33,.28);
+  border-radius:50% 40% 0 0;
+  transform:skewX(-25deg) rotate(-3deg);
+  box-shadow:0 -3px 14px rgba(249,137,32,.10);
+}
+html[data-cut-theme="dark"] .cut-masthead-logo {
+  flex-basis:230px;
+  width:230px;
+  height:63px;
+  padding:4px 11px;
+  background:transparent;
+  border-radius:0;
+}
+html[data-cut-theme="dark"] .cut-masthead-title {
+  gap:5px;
+  border-left-color:rgba(241,245,255,.53);
+}
+html[data-cut-theme="dark"] .cut-masthead-title strong span {
+  color:#ffb537;
+}
+html[data-cut-theme="dark"] .cut-masthead-title small {
+  color:#f3f6fb;
+  letter-spacing:.24em;
+}
+html[data-cut-theme="dark"] .cut-masthead-controls {z-index:1;}
+html[data-cut-theme="dark"] .cut-modern-app > .sidebar {
+  background:
+    radial-gradient(ellipse 95% 29% at -25% 79%,rgba(255,127,25,.16),transparent 79%),
+    linear-gradient(166deg,#0b192b 0%,#0d1f34 62%,#09192c 100%);
+}
+html[data-cut-theme="dark"] .cut-modern-app .main-content {
+  padding:18px 24px 30px;
+  background:
+    radial-gradient(ellipse 80% 36% at 65% 0%,rgba(24,51,82,.53),transparent 94%),
+    linear-gradient(152deg,#091828 0%,#0a1829 70%,#0c2038 100%);
+}
+html[data-cut-theme="dark"] .cut-modern-app .topbar {
+  margin-bottom:12px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .topbar h1 {
+  font-size:clamp(26px,2.5vw,37px);
+  text-shadow:0 1px 1px rgba(0,0,0,.14);
+}
+html[data-cut-theme="dark"] .cut-modern-app .page-eyebrow {
+  color:#ffc15c;
+}
+/* Car front is cut directly from the approved dark concept, no stock replacement. */
+html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner {
+  min-height:130px;
+  padding:17px 22px;
+  border-color:#43536a;
+  border-left:5px solid #ff961d;
+  background:linear-gradient(112deg,#142438 0%,#112138 45%,#0a192b 100%);
+  box-shadow:0 9px 30px rgba(0,5,16,.26),inset 4px 0 14px -7px rgba(255,167,34,.65);
+}
+html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner::before {
+  content:"";
+  position:absolute;
+  z-index:0;
+  right:0;top:0;bottom:0;
+  width:min(53%,680px);
+  pointer-events:none;
+  background:url('/cut-night-assets/approved-night-hero.jpg') center right / cover no-repeat;
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 29%,#000 100%);
+  mask-image:linear-gradient(to right,transparent 0%,#000 29%,#000 100%);
+}
+html[data-cut-theme="dark"] .cut-welcome-copy {max-width:min(705px,76%)}
+html[data-cut-theme="dark"] .cut-welcome-copy h2 {
+  font-size:clamp(23px,2.1vw,29px);
+}
+html[data-cut-theme="dark"] .cut-welcome-copy p {color:#cbd5e4;}
+html[data-cut-theme="dark"] .cut-welcome-settings {
+  z-index:2;
+  background:rgba(79,49,24,.8);
+  box-shadow:0 0 18px rgba(255,147,32,.08);
+}
+html[data-cut-theme="dark"] .cut-modern-app .metric-grid {
+  margin-top:13px;
+  gap:13px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .metric-card {
+  min-height:99px;
+  padding:13px 15px;
+  border-color:#3f5066;
+  border-radius:15px;
+  background:linear-gradient(115deg,#1c3047 0%,#15283d 65%,#102137 100%);
+  box-shadow:0 10px 22px rgba(0,8,21,.18),inset 0 1px 0 rgba(255,255,255,.025);
+}
+html[data-cut-theme="dark"] .cut-modern-app .metric-card strong {
+  margin:5px 0 3px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .workspace-grid {
+  margin-top:13px;
+  gap:13px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .workspace-card,
+html[data-cut-theme="dark"] .cut-modern-app .attention-panel {
+  padding:17px 18px;
+  border-color:#415269;
+  background:linear-gradient(125deg,#1a2e45 0%,#11243a 78%,#0d2035 100%);
+  box-shadow:0 11px 26px rgba(0,8,21,.17),inset 0 1px 0 rgba(255,255,255,.025);
+}
+html[data-cut-theme="dark"] .cut-modern-app .card-kicker {
+  color:#ffb03f;
+  font-size:12px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .card-header h3 {
+  font-size:21px;
+}
+html[data-cut-theme="dark"] .cut-modern-app .vehicle-now-row {
+  background:linear-gradient(110deg,#233950,#1b3045);
+  border:1px solid rgba(221,233,249,.06);
+}
+html[data-cut-theme="dark"] .cut-modern-app .attention-panel {margin-top:13px;}
+html[data-cut-theme="dark"] .cut-action-primary {
+  background:linear-gradient(100deg,#ffb542,#e77d17);
+  color:#131e30;
+  box-shadow:0 7px 19px rgba(236,117,13,.23);
+}
+@media (max-width:1360px) and (min-width:761px) {
+  html[data-cut-theme="dark"] .cut-masthead-logo {flex-basis:178px;width:178px;height:57px}
+  html[data-cut-theme="dark"] .cut-modern-app .main-content {padding:17px 20px 28px}
+}
+@media (max-width:760px) {
+  html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner::before {width:57%;opacity:.70}
+  html[data-cut-theme="dark"] .cut-welcome-copy {max-width:88%}
+}
+@media (max-width:520px) {
+  html[data-cut-theme="dark"] .cut-modern-app .cut-welcome-banner::before {display:none}
+  html[data-cut-theme="dark"] .cut-welcome-copy {max-width:100%}
+}

@@ -1,0 +1,15 @@
+{
+  "application": "CUT Improvement Auto",
+  "version": "0.1.1",
+  "files": {
+    "app-icon.svg": "d919073fced627745c58724fcbd805db76f281b5e9def63e8d1424b1da6fcd39",
+    "assets/index-7hPVNpDk.css": "d9b013efa121b93ab5499f9adfc7296bf4f75fa2bfce19bbb1fa4755d4138834",
+    "assets/index-HtmG2LsU.js": "f509ff8b252ccd6c1c6e8c18d2102775c942cf031959f576adaa43dc0d901c54",
+    "favicon.svg": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66",
+    "icons.svg": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a",
+    "index.html": "6f5b8932e4ecd39b74e72d85fa671fa58e4fab72109589de4df1d6ef263dbd5b",
+    "manifest.webmanifest": "e0ad1f7c95d075728e89de91666cabdd35ea1e6bfbe0420f86bc448deb4adfb1",
+    "release-check-0.1.1.txt": "6fc53dbf7691ed46657ffa1f7828b9c96c121948a95959d3bbe0d610b4fcb162",
+    "sw.js": "62ba17cc052770509559b7f5525142450d0868e0c80ba5b97f7ec4fb85b82ad8"
+  }
+}

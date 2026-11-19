@@ -1,0 +1,733 @@
+/* CUT Night Drive 0.2.0: dark-mode scoped layer; safe with light mode. */
+html[data-cut-theme="dark"] {
+color-scheme: dark;
+  --cut-bg: #081525;
+  --cut-bg-deep: #061120;
+  --cut-side: #09172a;
+  --cut-panel: #14263c;
+  --cut-panel-hi: #1a3048;
+  --cut-panel-low: #102238;
+  --cut-border: #31465a;
+  --cut-text: #f3f7ff;
+  --cut-muted: #c0cddd;
+  --cut-subtle: #a1b0c2;
+  --cut-gold: #ffb823;
+  --cut-orange: #f28b1c;
+  --cut-highlight: #ffc862;
+  --cut-focus: rgb(255 184 35 / 21%);
+  --cut-shadow: rgb(0 0 0 / 21%);
+  color: var(--cut-text);
+  background: var(--cut-bg);
+}
+
+html[data-cut-theme="dark"] html,
+html[data-cut-theme="dark"] body,
+html[data-cut-theme="dark"] #root {
+color: var(--cut-text);
+  background: var(--cut-bg);
+}
+
+html[data-cut-theme="dark"] body {
+background: var(--cut-bg);
+}
+
+html[data-cut-theme="dark"] ::selection {
+background: #91601b; color: #fff;
+}
+
+html[data-cut-theme="dark"] .app-shell {
+background: radial-gradient(ellipse 73% 35% at 84% 0%, #18304a 0%, transparent 70%),
+    linear-gradient(155deg, #0b192a, #071321 80%);
+}
+
+html[data-cut-theme="dark"] .sidebar {
+background: radial-gradient(ellipse 145% 65% at -40% 92%, #122c45 0%, transparent 70%),
+    linear-gradient(165deg, #0a182b 0%, #071426 100%);
+  color: #fff;
+  border-right: 1px solid #293d52;
+}
+
+html[data-cut-theme="dark"] .brand {
+align-items: flex-start; flex-direction: column; gap: 8px; padding: 8px 9px 28px;
+}
+
+html[data-cut-theme="dark"] .brand-mark {
+width: min(198px, 100%); height: 61px; flex: 0 0 auto;
+  display: block; border-radius: 0; box-shadow: none;
+  background: url("/cut-night-assets/improvement-auto-logo.png") left center / contain no-repeat;
+  color: transparent;
+}
+
+html[data-cut-theme="dark"] .brand-mark > svg {
+visibility: hidden;
+}
+
+html[data-cut-theme="dark"] .brand > div:last-child {
+max-width: 100%;
+}
+
+html[data-cut-theme="dark"] .brand-name {
+color: transparent; font-size: 0; line-height: 1.25;
+}
+
+html[data-cut-theme="dark"] .brand-name::before {
+content: "ЦУТ Improvement Auto"; display: block;
+  color: #f8faff; font-size: 17px; font-weight: 800; line-height: 1.25;
+}
+
+html[data-cut-theme="dark"] .brand-subtitle {
+margin-top: 5px; color: #bdcbd9; font-size: 10px; letter-spacing: .09em;
+}
+
+html[data-cut-theme="dark"] .sidebar-nav {
+gap: 7px;
+}
+
+html[data-cut-theme="dark"] .nav-item {
+min-height: 43px; color: #dde7f4; border-radius: 11px; font-weight: 680;
+}
+
+html[data-cut-theme="dark"] .nav-item:hover {
+color: #fff; background: #233a53;
+}
+
+html[data-cut-theme="dark"] .nav-item-active,
+html[data-cut-theme="dark"] .nav-item-active:hover {
+color: #151c28; background: linear-gradient(110deg, #ffd46b, #f6a324);
+  box-shadow: 0 5px 16px rgb(242 139 28 / 16%);
+}
+
+html[data-cut-theme="dark"] .connection-status,
+html[data-cut-theme="dark"] .sync-status-badge {
+color: #d0deec;
+}
+
+html[data-cut-theme="dark"] .sync-status-badge {
+background: #14283f; border-color: #344d64;
+}
+
+html[data-cut-theme="dark"] .sync-status-badge:hover {
+background: #1c3650;
+}
+
+html[data-cut-theme="dark"] .main-content {
+color: var(--cut-text);
+}
+
+html[data-cut-theme="dark"] .topbar {
+border-bottom: 1px solid #25394d; padding-bottom: 14px;
+}
+
+html[data-cut-theme="dark"] .topbar h1 {
+color: #fff; letter-spacing: -.035em;
+}
+
+html[data-cut-theme="dark"] .page-eyebrow,
+html[data-cut-theme="dark"] .welcome-label,
+html[data-cut-theme="dark"] .card-kicker {
+color: var(--cut-gold);
+}
+
+html[data-cut-theme="dark"] .search-button,
+html[data-cut-theme="dark"] .user-menu,
+html[data-cut-theme="dark"] .secondary-button,
+html[data-cut-theme="dark"] .refresh-button,
+html[data-cut-theme="dark"] .settings-secondary,
+html[data-cut-theme="dark"] .wo-secondary-action,
+html[data-cut-theme="dark"] .wo-refresh,
+html[data-cut-theme="dark"] .wo-add-button,
+html[data-cut-theme="dark"] .wo-print-button,
+html[data-cut-theme="dark"] .notifications-secondary-button,
+html[data-cut-theme="dark"] .reports-refresh-button,
+html[data-cut-theme="dark"] .notification-edit-button,
+html[data-cut-theme="dark"] .icon-action,
+html[data-cut-theme="dark"] .settings-top-button,
+html[data-cut-theme="dark"] .settings-close,
+html[data-cut-theme="dark"] .wo-icon-button,
+html[data-cut-theme="dark"] .notification-icon-button,
+html[data-cut-theme="dark"] .global-search-close,
+html[data-cut-theme="dark"] .date-filter input {
+color: #eff6ff; background: #162a41; border-color: #385069;
+}
+
+html[data-cut-theme="dark"] .search-button:hover,
+html[data-cut-theme="dark"] .secondary-button:hover,
+html[data-cut-theme="dark"] .refresh-button:hover,
+html[data-cut-theme="dark"] .wo-secondary-action:hover,
+html[data-cut-theme="dark"] .wo-add-button:hover,
+html[data-cut-theme="dark"] .reports-refresh-button:hover,
+html[data-cut-theme="dark"] .notification-edit-button:hover,
+html[data-cut-theme="dark"] .icon-action:hover {
+background: #263e54; color: #ffcf6a; border-color: #8b6830;
+}
+
+html[data-cut-theme="dark"] .user-chip,
+html[data-cut-theme="dark"] .auth-logo,
+html[data-cut-theme="dark"] .login-logo {
+color: #ffbf35; background: #243b55;
+}
+
+html[data-cut-theme="dark"] .user-info strong,
+html[data-cut-theme="dark"] .card-header h3 {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .user-info span,
+html[data-cut-theme="dark"] .logout-button {
+color: var(--cut-subtle);
+}
+
+html[data-cut-theme="dark"] .logout-button:hover {
+background: #273b50; color: #fff;
+}
+
+html[data-cut-theme="dark"] .welcome-panel {
+position: relative; min-height: 152px; overflow: hidden;
+  background: linear-gradient(90deg, #13253d 0%, #13253def 52%, #14264055 76%),
+    url("/cut-night-assets/night-hero.jpg") right 42% / auto 260% no-repeat,
+    #12243a;
+  border-color: #40546a; border-left: 4px solid var(--cut-orange);
+  box-shadow: 0 7px 22px var(--cut-shadow);
+}
+
+html[data-cut-theme="dark"] .welcome-panel > * {
+position: relative; z-index: 1;
+}
+
+html[data-cut-theme="dark"] .welcome-panel h2 {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .welcome-panel p {
+color: #d5e0ec;
+}
+
+html[data-cut-theme="dark"] .welcome-icon {
+background: #31281e; color: var(--cut-gold); border: 1px solid #8b5b25;
+}
+
+html[data-cut-theme="dark"] .metric-card,
+html[data-cut-theme="dark"] .workspace-card,
+html[data-cut-theme="dark"] .attention-panel,
+html[data-cut-theme="dark"] .data-card,
+html[data-cut-theme="dark"] .detail-card,
+html[data-cut-theme="dark"] .settings-card,
+html[data-cut-theme="dark"] .settings-section-toolbar,
+html[data-cut-theme="dark"] .employee-access-card,
+html[data-cut-theme="dark"] .wo-list-panel,
+html[data-cut-theme="dark"] .wo-detail-panel,
+html[data-cut-theme="dark"] .notifications-panel,
+html[data-cut-theme="dark"] .reports-period-card,
+html[data-cut-theme="dark"] .report-section-card,
+html[data-cut-theme="dark"] .report-metric-card,
+html[data-cut-theme="dark"] .report-employee-card,
+html[data-cut-theme="dark"] .login-card,
+html[data-cut-theme="dark"] .auth-loading,
+html[data-cut-theme="dark"] .global-search-window,
+html[data-cut-theme="dark"] .notification-modal,
+html[data-cut-theme="dark"] .wo-modal,
+html[data-cut-theme="dark"] .modal-card,
+html[data-cut-theme="dark"] .notifications-tabs,
+html[data-cut-theme="dark"] .settings-tabs,
+html[data-cut-theme="dark"] .reports-tabs,
+html[data-cut-theme="dark"] .employee-filter-bar,
+html[data-cut-theme="dark"] .wo-toolbar,
+html[data-cut-theme="dark"] .notifications-info,
+html[data-cut-theme="dark"] .placeholder-page {
+background: linear-gradient(150deg, var(--cut-panel-hi), var(--cut-panel) 72%);
+  color: var(--cut-text); border-color: var(--cut-border);
+  box-shadow: 0 5px 18px var(--cut-shadow);
+}
+
+html[data-cut-theme="dark"] .metric-card {
+border-radius: 15px;
+}
+
+html[data-cut-theme="dark"] .metric-card strong,
+html[data-cut-theme="dark"] .card-header h3,
+html[data-cut-theme="dark"] .data-card-title h2,
+html[data-cut-theme="dark"] .detail-header h2,
+html[data-cut-theme="dark"] .settings-card-heading h2,
+html[data-cut-theme="dark"] .notifications-panel-heading h2,
+html[data-cut-theme="dark"] .report-section-heading h2,
+html[data-cut-theme="dark"] .wo-detail-header h2,
+html[data-cut-theme="dark"] .report-metric-card > strong,
+html[data-cut-theme="dark"] .placeholder-page h2,
+html[data-cut-theme="dark"] .report-table td > strong {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .metric-label,
+html[data-cut-theme="dark"] .metric-note,
+html[data-cut-theme="dark"] .welcome-panel p,
+html[data-cut-theme="dark"] .row-meta,
+html[data-cut-theme="dark"] .user-info span,
+html[data-cut-theme="dark"] .settings-description,
+html[data-cut-theme="dark"] .notification-message,
+html[data-cut-theme="dark"] .report-metric-card > span,
+html[data-cut-theme="dark"] .report-section-heading span,
+html[data-cut-theme="dark"] .card-kicker,
+html[data-cut-theme="dark"] .settings-card-heading span,
+html[data-cut-theme="dark"] .wo-overview span,
+html[data-cut-theme="dark"] .wo-summary-strip span,
+html[data-cut-theme="dark"] .wo-payment-summary span,
+html[data-cut-theme="dark"] .notifications-info span,
+html[data-cut-theme="dark"] .appointment-main span,
+html[data-cut-theme="dark"] .appointment-main small {
+color: var(--cut-muted);
+}
+
+html[data-cut-theme="dark"] .metric-label {
+color: #d4dfed;
+}
+
+html[data-cut-theme="dark"] .metric-note {
+color: #aebfd2;
+}
+
+html[data-cut-theme="dark"] .primary-button,
+html[data-cut-theme="dark"] .primary-inline-button,
+html[data-cut-theme="dark"] .wo-status-action,
+html[data-cut-theme="dark"] .global-search-submit,
+html[data-cut-theme="dark"] .notifications-primary-button {
+background: linear-gradient(110deg, #ffbb4b, #ec8616);
+  color: #101a27; border-color: #f1a328; font-weight: 850;
+  box-shadow: 0 3px 12px rgb(235 128 10 / 15%);
+}
+
+html[data-cut-theme="dark"] .primary-button:hover:not(:disabled),
+html[data-cut-theme="dark"] .primary-inline-button:hover:not(:disabled),
+html[data-cut-theme="dark"] .wo-status-action:hover:not(:disabled),
+html[data-cut-theme="dark"] .global-search-submit:hover:not(:disabled) {
+background: linear-gradient(110deg, #ffd071, #f19a30);
+  border-color: #ffd071;
+}
+
+html[data-cut-theme="dark"] .data-row,
+html[data-cut-theme="dark"] .wo-order-card,
+html[data-cut-theme="dark"] .appointment-card,
+html[data-cut-theme="dark"] .order-summary-item,
+html[data-cut-theme="dark"] .vehicle-now-row,
+html[data-cut-theme="dark"] .detail-grid > div,
+html[data-cut-theme="dark"] .empty-state,
+html[data-cut-theme="dark"] .notifications-filters,
+html[data-cut-theme="dark"] .notifications-summary > div,
+html[data-cut-theme="dark"] .reminder-due > div,
+html[data-cut-theme="dark"] .notification-toggle,
+html[data-cut-theme="dark"] .notification-preference-client > div,
+html[data-cut-theme="dark"] .wo-overview > div,
+html[data-cut-theme="dark"] .wo-summary-strip > div,
+html[data-cut-theme="dark"] .wo-payment-summary > div,
+html[data-cut-theme="dark"] .settings-access-fields,
+html[data-cut-theme="dark"] .employee-access-details > div,
+html[data-cut-theme="dark"] .report-source-grid article,
+html[data-cut-theme="dark"] .report-finance-breakdown article,
+html[data-cut-theme="dark"] .work-participation-toggle,
+html[data-cut-theme="dark"] .report-employee-footer,
+html[data-cut-theme="dark"] .report-table th,
+html[data-cut-theme="dark"] .wo-assignment-block,
+html[data-cut-theme="dark"] .wo-performers > div,
+html[data-cut-theme="dark"] .settings-account-note,
+html[data-cut-theme="dark"] .settings-hint,
+html[data-cut-theme="dark"] .employee-filter > span,
+html[data-cut-theme="dark"] .dashboard-day-switch,
+html[data-cut-theme="dark"] .wo-tabs,
+html[data-cut-theme="dark"] .wo-inline-form,
+html[data-cut-theme="dark"] .wo-editor,
+html[data-cut-theme="dark"] .wo-photo-area,
+html[data-cut-theme="dark"] .wo-payment-row,
+html[data-cut-theme="dark"] .wo-item-card,
+html[data-cut-theme="dark"] .wo-dispute-card,
+html[data-cut-theme="dark"] .settings-form-grid input,
+html[data-cut-theme="dark"] .settings-access-fields input,
+html[data-cut-theme="dark"] .wo-list-heading strong,
+html[data-cut-theme="dark"] .vehicle-now-heading span {
+background: var(--cut-panel-low);
+  border-color: #2b4258;
+  color: #e9f2fc;
+}
+
+html[data-cut-theme="dark"] .data-row:hover,
+html[data-cut-theme="dark"] .wo-order-card:hover,
+html[data-cut-theme="dark"] .appointment-card:hover,
+html[data-cut-theme="dark"] .global-search-result:hover,
+html[data-cut-theme="dark"] .settings-tab:hover,
+html[data-cut-theme="dark"] .notifications-tab:hover,
+html[data-cut-theme="dark"] .reports-tab:hover,
+html[data-cut-theme="dark"] .employee-filter:hover,
+html[data-cut-theme="dark"] .wo-filter:hover {
+background: #253d55; color: #fff;
+}
+
+html[data-cut-theme="dark"] .data-row-active,
+html[data-cut-theme="dark"] .wo-order-card-active {
+background: #253c52; border-color: #f0a52a;
+}
+
+html[data-cut-theme="dark"] .settings-tab,
+html[data-cut-theme="dark"] .notifications-tab,
+html[data-cut-theme="dark"] .reports-tab,
+html[data-cut-theme="dark"] .employee-filter,
+html[data-cut-theme="dark"] .wo-filter,
+html[data-cut-theme="dark"] .dashboard-day-button,
+html[data-cut-theme="dark"] .wo-tab,
+html[data-cut-theme="dark"] .wo-order-card,
+html[data-cut-theme="dark"] .appointment-card {
+color: #d0dceb;
+}
+
+html[data-cut-theme="dark"] .settings-tab-active,
+html[data-cut-theme="dark"] .employee-filter-active,
+html[data-cut-theme="dark"] .wo-filter-active,
+html[data-cut-theme="dark"] .notifications-tab-active,
+html[data-cut-theme="dark"] .reports-tab-active,
+html[data-cut-theme="dark"] .dashboard-day-button-active {
+color: #ffce70; background: #344054; border-color: #97652d;
+}
+
+html[data-cut-theme="dark"] .wo-tab-active {
+color: #ffce70; border-bottom-color: #ffae2c;
+}
+
+html[data-cut-theme="dark"] .wo-tabs {
+border-top-color: #31465a; border-bottom-color: #31465a;
+}
+
+html[data-cut-theme="dark"] .wo-order-card-active {
+background: #243c54;
+}
+
+html[data-cut-theme="dark"] .wo-list-heading,
+html[data-cut-theme="dark"] .wo-section-heading,
+html[data-cut-theme="dark"] .report-section-heading,
+html[data-cut-theme="dark"] .report-employee-card > summary,
+html[data-cut-theme="dark"] .notification-card-actions,
+html[data-cut-theme="dark"] .wo-financial-line,
+html[data-cut-theme="dark"] .appointment-row,
+html[data-cut-theme="dark"] .report-table td,
+html[data-cut-theme="dark"] .report-table th {
+border-color: #32495f;
+}
+
+html[data-cut-theme="dark"] .wo-detail-number,
+html[data-cut-theme="dark"] .wo-order-reason,
+html[data-cut-theme="dark"] .wo-order-card-bottom,
+html[data-cut-theme="dark"] .wo-order-vehicle,
+html[data-cut-theme="dark"] .wo-detail-car,
+html[data-cut-theme="dark"] .wo-section-heading span,
+html[data-cut-theme="dark"] .wo-part-meta,
+html[data-cut-theme="dark"] .wo-item-text,
+html[data-cut-theme="dark"] .wo-performers small,
+html[data-cut-theme="dark"] .wo-financial-line,
+html[data-cut-theme="dark"] .wo-item-main span,
+html[data-cut-theme="dark"] .wo-payment-row span,
+html[data-cut-theme="dark"] .wo-dispute-heading span,
+html[data-cut-theme="dark"] .wo-dispute-note span,
+html[data-cut-theme="dark"] .wo-order-card-bottom,
+html[data-cut-theme="dark"] .report-table td > span {
+color: #bbcbda;
+}
+
+html[data-cut-theme="dark"] .wo-order-client,
+html[data-cut-theme="dark"] .wo-item-main strong,
+html[data-cut-theme="dark"] .appointment-card-main strong,
+html[data-cut-theme="dark"] .wo-overview strong,
+html[data-cut-theme="dark"] .wo-summary-strip strong,
+html[data-cut-theme="dark"] .wo-payment-summary strong,
+html[data-cut-theme="dark"] .notification-card-top strong,
+html[data-cut-theme="dark"] .report-employee-card > summary strong {
+color: #f8fbff;
+}
+
+html[data-cut-theme="dark"] .appointment-main strong,
+html[data-cut-theme="dark"] .appointment-time,
+html[data-cut-theme="dark"] .appointment-card-time,
+html[data-cut-theme="dark"] .wo-money,
+html[data-cut-theme="dark"] .wo-order-card-top > strong {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .notification-card,
+html[data-cut-theme="dark"] .reminder-card,
+html[data-cut-theme="dark"] .global-search-result,
+html[data-cut-theme="dark"] .wo-photo-thumb,
+html[data-cut-theme="dark"] .wo-photo-item > button:first-child {
+color: #f6faff; background: #13283e; border-color: #344a60;
+}
+
+html[data-cut-theme="dark"] .notification-message,
+html[data-cut-theme="dark"] .reminder-card > p,
+html[data-cut-theme="dark"] .notification-meta,
+html[data-cut-theme="dark"] .reminder-vehicle,
+html[data-cut-theme="dark"] .reminder-due span,
+html[data-cut-theme="dark"] .notifications-panel-heading span {
+color: #c4d0df;
+}
+
+html[data-cut-theme="dark"] .search-field,
+html[data-cut-theme="dark"] .global-search-input-wrap,
+html[data-cut-theme="dark"] .login-form input,
+html[data-cut-theme="dark"] .form-grid input,
+html[data-cut-theme="dark"] .form-grid select,
+html[data-cut-theme="dark"] .form-grid textarea,
+html[data-cut-theme="dark"] .single-field select,
+html[data-cut-theme="dark"] .date-filter input,
+html[data-cut-theme="dark"] .settings-form-grid input,
+html[data-cut-theme="dark"] .settings-access-fields input,
+html[data-cut-theme="dark"] .settings-access-fields select,
+html[data-cut-theme="dark"] .wo-inline-form input,
+html[data-cut-theme="dark"] .wo-inline-form textarea,
+html[data-cut-theme="dark"] .wo-form-grid input,
+html[data-cut-theme="dark"] .wo-form-grid textarea,
+html[data-cut-theme="dark"] .wo-form-grid select,
+html[data-cut-theme="dark"] .wo-assignment-row input,
+html[data-cut-theme="dark"] .wo-assignment-row select,
+html[data-cut-theme="dark"] .notification-form-grid input,
+html[data-cut-theme="dark"] .notification-form-grid textarea,
+html[data-cut-theme="dark"] .notification-form-grid select,
+html[data-cut-theme="dark"] .notification-client-selector select,
+html[data-cut-theme="dark"] .notifications-filters select,
+html[data-cut-theme="dark"] .reports-period-controls input,
+html[data-cut-theme="dark"] .work-participation-rate input,
+html[data-cut-theme="dark"] .global-search-input-wrap input {
+color: #fff; background: #0c1f33; border-color: #465b70;
+}
+
+html[data-cut-theme="dark"] input::placeholder,
+html[data-cut-theme="dark"] textarea::placeholder {
+color: #9cacc0; opacity: 1;
+}
+
+html[data-cut-theme="dark"] select option {
+color: #fff; background: #102237;
+}
+
+html[data-cut-theme="dark"] input:disabled,
+html[data-cut-theme="dark"] select:disabled,
+html[data-cut-theme="dark"] textarea:disabled {
+opacity: .68;
+}
+
+html[data-cut-theme="dark"] .form-grid label > span,
+html[data-cut-theme="dark"] .single-field > span,
+html[data-cut-theme="dark"] .wo-form-grid label span,
+html[data-cut-theme="dark"] .settings-form-grid label > span,
+html[data-cut-theme="dark"] .notification-form-grid label > span,
+html[data-cut-theme="dark"] .notifications-filters label > span,
+html[data-cut-theme="dark"] .settings-access-fields label > span,
+html[data-cut-theme="dark"] .report-finance-lines > div,
+html[data-cut-theme="dark"] .report-table td {
+color: #dce6f2;
+}
+
+html[data-cut-theme="dark"] .search-field:focus-within,
+html[data-cut-theme="dark"] .global-search-input-wrap:focus-within,
+html[data-cut-theme="dark"] .login-form input:focus,
+html[data-cut-theme="dark"] .form-grid input:focus,
+html[data-cut-theme="dark"] .form-grid textarea:focus,
+html[data-cut-theme="dark"] .form-grid select:focus,
+html[data-cut-theme="dark"] .notification-form-grid input:focus,
+html[data-cut-theme="dark"] .wo-form-grid input:focus,
+html[data-cut-theme="dark"] .settings-form-grid input:focus {
+border-color: #ffb823; box-shadow: 0 0 0 3px var(--cut-focus);
+}
+
+html[data-cut-theme="dark"] button:focus-visible,
+html[data-cut-theme="dark"] a:focus-visible,
+html[data-cut-theme="dark"] select:focus-visible,
+html[data-cut-theme="dark"] input:focus-visible,
+html[data-cut-theme="dark"] textarea:focus-visible {
+outline: 2px solid #ffc862; outline-offset: 2px;
+}
+
+html[data-cut-theme="dark"] a {
+color: #ffc862;
+}
+
+html[data-cut-theme="dark"] .login-error,
+html[data-cut-theme="dark"] .dashboard-error,
+html[data-cut-theme="dark"] .form-error,
+html[data-cut-theme="dark"] .notifications-error,
+html[data-cut-theme="dark"] .reports-error,
+html[data-cut-theme="dark"] .wo-error,
+html[data-cut-theme="dark"] .notification-error-text,
+html[data-cut-theme="dark"] .settings-error {
+background: #3a2228; color: #ffd5d5; border-color: #90535c;
+}
+
+html[data-cut-theme="dark"] .settings-success,
+html[data-cut-theme="dark"] .notifications-success,
+html[data-cut-theme="dark"] .ready-row,
+html[data-cut-theme="dark"] .attention-calm {
+background: #183f3c; color: #b0ffdf; border-color: #2b6a58;
+}
+
+html[data-cut-theme="dark"] .wo-summary-debt,
+html[data-cut-theme="dark"] .wo-payment-debt,
+html[data-cut-theme="dark"] .attention-item-warning,
+html[data-cut-theme="dark"] .report-metric-debt {
+background: #412d22 !important; color: #ffdec8;
+}
+
+html[data-cut-theme="dark"] .wo-summary-debt strong,
+html[data-cut-theme="dark"] .wo-payment-debt strong,
+html[data-cut-theme="dark"] .vehicle-now-debt {
+color: #ffc6a8 !important;
+}
+
+html[data-cut-theme="dark"] .wo-status-planned,
+html[data-cut-theme="dark"] .wo-status-issued,
+html[data-cut-theme="dark"] .notification-status-cancelled,
+html[data-cut-theme="dark"] .reminder-status-cancelled {
+color: #dce7f2; background: #37465b;
+}
+
+html[data-cut-theme="dark"] .wo-status-in_progress,
+html[data-cut-theme="dark"] .notification-status-prepared,
+html[data-cut-theme="dark"] .reminder-status-planned {
+color: #ffd17e; background: #4b3a27;
+}
+
+html[data-cut-theme="dark"] .wo-status-ready,
+html[data-cut-theme="dark"] .notification-status-sent,
+html[data-cut-theme="dark"] .reminder-status-completed {
+color: #b0ffcf; background: #1b483a;
+}
+
+html[data-cut-theme="dark"] .notification-status-failed {
+color: #ffd5d5; background: #562d37;
+}
+
+html[data-cut-theme="dark"] .auth-page {
+color: var(--cut-text);
+  background: radial-gradient(ellipse at 25% 5%, #263950, transparent 55%), #071422;
+}
+
+html[data-cut-theme="dark"] .auth-loading strong,
+html[data-cut-theme="dark"] .login-heading h1,
+html[data-cut-theme="dark"] .login-brand-name {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .login-heading p,
+html[data-cut-theme="dark"] .login-brand-note,
+html[data-cut-theme="dark"] .login-heading > span,
+html[data-cut-theme="dark"] .auth-loading,
+html[data-cut-theme="dark"] .login-form label > span {
+color: #c8d6e5;
+}
+
+html[data-cut-theme="dark"] .wo-modal-backdrop,
+html[data-cut-theme="dark"] .notification-modal-backdrop,
+html[data-cut-theme="dark"] .modal-backdrop,
+html[data-cut-theme="dark"] .global-search-overlay {
+background: rgb(0 5 11 / 78%);
+}
+
+html[data-cut-theme="dark"] .wo-modal,
+html[data-cut-theme="dark"] .notification-modal,
+html[data-cut-theme="dark"] .modal-card,
+html[data-cut-theme="dark"] .global-search-window {
+background: #172a40; color: #fff;
+}
+
+html[data-cut-theme="dark"] .global-search-result-title strong,
+html[data-cut-theme="dark"] .global-search-start strong,
+html[data-cut-theme="dark"] .global-search-empty strong,
+html[data-cut-theme="dark"] .global-search-summary strong {
+color: #fff;
+}
+
+html[data-cut-theme="dark"] .global-search-result-main > span,
+html[data-cut-theme="dark"] .global-search-result-main > small,
+html[data-cut-theme="dark"] .global-search-summary,
+html[data-cut-theme="dark"] .global-search-hint {
+color: #c7d4e2;
+}
+
+html[data-cut-theme="dark"] .global-search-result-icon,
+html[data-cut-theme="dark"] .global-search-group-heading > span,
+html[data-cut-theme="dark"] .count-badge {
+color: #ffcf71; background: #344054;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-window {
+border-color: #465a6b;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-toolbar,
+html[data-cut-theme="dark"] .wo-pdf-switcher {
+background: #182b41; color: #fff; border-color: #354a60;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-action,
+html[data-cut-theme="dark"] .wo-pdf-type-active {
+color: #fff; background: #1c3249; border-color: #465b70;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-type,
+html[data-cut-theme="dark"] .wo-pdf-toolbar-left span {
+color: #c0cfdd;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-viewer {
+background: #192a3b;
+}
+
+html[data-cut-theme="dark"] .wo-pdf-viewer iframe {
+background: #fff;
+}
+
+@media (max-width: 760px) {
+html[data-cut-theme="dark"] .brand {
+flex-direction: row; align-items: center; gap: 10px; padding: 3px 8px 13px;
+}
+
+html[data-cut-theme="dark"] .brand-mark {
+flex: 0 0 115px; width: 115px; height: 47px;
+}
+
+html[data-cut-theme="dark"] .brand-name::before {
+font-size: 15px;
+}
+
+html[data-cut-theme="dark"] .main-content {
+padding-top: 18px;
+}
+
+html[data-cut-theme="dark"] .welcome-panel {
+background-size: auto, auto 100%, auto;
+}
+}
+
+@media (max-width: 520px) {
+html[data-cut-theme="dark"] .brand-mark {
+flex-basis: 92px; width: 92px; height: 40px;
+}
+
+html[data-cut-theme="dark"] .brand-name::before {
+font-size: 13px;
+}
+
+html[data-cut-theme="dark"] .welcome-panel {
+background-image: linear-gradient(115deg, #172b40, #15263a);
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+html[data-cut-theme="dark"] .nav-item {
+transition: none;
+}
+}
+
+/* Additional contrast on the actual dashboard, including action buttons. */
+html[data-cut-theme="dark"] .quick-actions button:not(.primary-inline-button) {
+  background: #142a40; color: #e7f0fc; border-color: #41556c;
+}
+html[data-cut-theme="dark"] .quick-actions button:not(.primary-inline-button):hover {
+  background: #213d54; color: #ffce70;
+}
+html[data-cut-theme="dark"] .attention-item span,
+html[data-cut-theme="dark"] .attention-calm span { color: #c5d5e5; }
+html[data-cut-theme="dark"] .vehicle-now-row span,
+html[data-cut-theme="dark"] .vehicle-now-row small { color: #b5c7d9; }

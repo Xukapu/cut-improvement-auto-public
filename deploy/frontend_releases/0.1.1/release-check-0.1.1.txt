@@ -1,0 +1,3 @@
+CUT Improvement Auto - temporary frontend release check 0.1.1
+This is the original 0.1.0 interface plus this test marker.
+No application functions were modified.

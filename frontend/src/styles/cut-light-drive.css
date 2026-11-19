@@ -1,0 +1,424 @@
+/* CUT Improvement Auto — Light Drive 0.2.0
+   Readable professional light theme. Loaded after app.css and scoped Night Drive.
+   Status colors retain their semantic meaning; print/PDF content unaffected. */
+html[data-cut-theme="light"] {
+  color-scheme: light;
+  --cut-bg: #f5f7fb;
+  --cut-bg-deep: #e9eef5;
+  --cut-side: #101e31;
+  --cut-panel: #fff;
+  --cut-panel-hi: #fff;
+  --cut-panel-low: #f4f7fb;
+  --cut-border: #e0e7ef;
+  --cut-text: #1c2a3d;
+  --cut-muted: #53657a;
+  --cut-subtle: #68788b;
+  --cut-gold: #c47b10;
+  --cut-orange: #dd811a;
+  --cut-highlight: #f8b74d;
+  --cut-focus: rgb(222 137 25 / 16%);
+  --cut-shadow: rgb(26 52 80 / 7%);
+  color: var(--cut-text);
+  background: var(--cut-bg);
+}
+html[data-cut-theme="light"] body,
+html[data-cut-theme="light"] #root { color: var(--cut-text); background: var(--cut-bg); }
+html[data-cut-theme="light"] ::selection { background: #ffe0a1; color: #2c3545; }
+html[data-cut-theme="light"] .app-shell {
+  background: radial-gradient(ellipse 85% 39% at 85% 0%, #fff5e6 0%, transparent 72%),
+    linear-gradient(160deg, #f9fafc, #f1f5fa 78%);
+}
+/* Dark professional navigation remains contrast-safe in the light theme. */
+html[data-cut-theme="light"] .sidebar {
+  background: radial-gradient(ellipse 120% 47% at -40% 100%, #263e51 0%, transparent 72%),
+    linear-gradient(170deg, #15283c, #0b192a 90%);
+  border-right: 1px solid #23364a; color: #fff;
+}
+html[data-cut-theme="light"] .brand { align-items: flex-start; flex-direction: column; gap: 8px; padding: 8px 9px 28px; }
+html[data-cut-theme="light"] .brand-mark {
+  width: min(198px, 100%); height: 61px; flex: 0 0 auto;
+  display: block; border-radius: 0; box-shadow: none;
+  background: url('/cut-night-assets/improvement-auto-logo.png') left center / contain no-repeat;
+  color: transparent;
+}
+html[data-cut-theme="light"] .brand-mark > svg { visibility: hidden; }
+html[data-cut-theme="light"] .brand > div:last-child { max-width: 100%; }
+html[data-cut-theme="light"] .brand-name { color: transparent; font-size: 0; line-height: 1.25; }
+html[data-cut-theme="light"] .brand-name::before {
+  content: 'ЦУТ Improvement Auto'; display: block;
+  color: #fff; font-size: 17px; font-weight: 800; line-height: 1.25;
+}
+html[data-cut-theme="light"] .brand-subtitle { margin-top: 5px; color: #cbd7e5; font-size: 10px; letter-spacing: .09em; }
+html[data-cut-theme="light"] .sidebar-nav { gap: 7px; }
+html[data-cut-theme="light"] .nav-item { min-height: 43px; color: #e1e9f3; border-radius: 11px; font-weight: 680; }
+html[data-cut-theme="light"] .nav-item:hover { color: #fff; background: #293e56; }
+html[data-cut-theme="light"] .nav-item-active,
+html[data-cut-theme="light"] .nav-item-active:hover {
+  color: #171e2c; background: linear-gradient(110deg,#ffda7d,#f2a52d);
+  box-shadow: 0 5px 18px rgb(243 160 31 / 15%);
+}
+html[data-cut-theme="light"] .connection-status,
+html[data-cut-theme="light"] .sync-status-badge { color: #cfdeec; }
+html[data-cut-theme="light"] .sync-status-badge { background: #1a2c42; border-color: #344c64; }
+html[data-cut-theme="light"] .sync-status-badge:hover { background: #263d54; }
+html[data-cut-theme="light"] .main-content { color: var(--cut-text); }
+html[data-cut-theme="light"] .topbar { border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; }
+html[data-cut-theme="light"] .topbar h1 { color: #18283b; letter-spacing: -.035em; }
+html[data-cut-theme="light"] .page-eyebrow,
+html[data-cut-theme="light"] .welcome-label,
+html[data-cut-theme="light"] .card-kicker { color: #aa680a; }
+/* Welcome surface has a genuine brand photo but never sacrifices text contrast. */
+html[data-cut-theme="light"] .welcome-panel {
+  position: relative; min-height: 152px; overflow: hidden;
+  background: linear-gradient(90deg, #fffefa 0%, #fffdf6 52%, #fffdf6ec 73%, #fffcf599 100%),
+    url('/cut-night-assets/night-hero.jpg') right 46% / auto 265% no-repeat,
+    #fffdf7;
+  border-color: #e7d8ba; border-left: 4px solid #e5a12c;
+  box-shadow: 0 7px 22px var(--cut-shadow);
+}
+html[data-cut-theme="light"] .welcome-panel > * { position: relative; z-index: 1; }
+html[data-cut-theme="light"] .welcome-panel h2 { color: #18283a; }
+html[data-cut-theme="light"] .welcome-panel p { color: #526177; }
+html[data-cut-theme="light"] .welcome-icon { background: #fff1d4; color: #af6805; border: 1px solid #edd09b; }
+/* Distinct, spacious cards without losing original layout. */
+html[data-cut-theme="light"] .metric-card,
+html[data-cut-theme="light"] .workspace-card,
+html[data-cut-theme="light"] .attention-panel,
+html[data-cut-theme="light"] .data-card,
+html[data-cut-theme="light"] .detail-card,
+html[data-cut-theme="light"] .settings-card,
+html[data-cut-theme="light"] .settings-section-toolbar,
+html[data-cut-theme="light"] .employee-access-card,
+html[data-cut-theme="light"] .wo-list-panel,
+html[data-cut-theme="light"] .wo-detail-panel,
+html[data-cut-theme="light"] .notifications-panel,
+html[data-cut-theme="light"] .reports-period-card,
+html[data-cut-theme="light"] .report-section-card,
+html[data-cut-theme="light"] .report-metric-card,
+html[data-cut-theme="light"] .report-employee-card,
+html[data-cut-theme="light"] .login-card,
+html[data-cut-theme="light"] .auth-loading,
+html[data-cut-theme="light"] .global-search-window,
+html[data-cut-theme="light"] .notification-modal,
+html[data-cut-theme="light"] .wo-modal,
+html[data-cut-theme="light"] .modal-card,
+html[data-cut-theme="light"] .notifications-tabs,
+html[data-cut-theme="light"] .settings-tabs,
+html[data-cut-theme="light"] .reports-tabs,
+html[data-cut-theme="light"] .employee-filter-bar,
+html[data-cut-theme="light"] .wo-toolbar,
+html[data-cut-theme="light"] .notifications-info,
+html[data-cut-theme="light"] .placeholder-page {
+  background: #fff; color: #1b2a3d;
+  border-color: var(--cut-border);
+  box-shadow: 0 6px 23px var(--cut-shadow);
+}
+html[data-cut-theme="light"] .metric-card { border-radius: 15px; }
+html[data-cut-theme="light"] .metric-card strong,
+html[data-cut-theme="light"] .card-header h3,
+html[data-cut-theme="light"] .data-card-title h2,
+html[data-cut-theme="light"] .detail-header h2,
+html[data-cut-theme="light"] .settings-card-heading h2,
+html[data-cut-theme="light"] .notifications-panel-heading h2,
+html[data-cut-theme="light"] .report-section-heading h2,
+html[data-cut-theme="light"] .wo-detail-header h2,
+html[data-cut-theme="light"] .report-metric-card > strong,
+html[data-cut-theme="light"] .placeholder-page h2,
+html[data-cut-theme="light"] .report-table td > strong { color: #1c2d42; }
+html[data-cut-theme="light"] .metric-label,
+html[data-cut-theme="light"] .metric-note,
+html[data-cut-theme="light"] .row-meta,
+html[data-cut-theme="light"] .settings-description,
+html[data-cut-theme="light"] .notification-message,
+html[data-cut-theme="light"] .report-metric-card > span,
+html[data-cut-theme="light"] .report-section-heading span,
+html[data-cut-theme="light"] .settings-card-heading span,
+html[data-cut-theme="light"] .wo-overview span,
+html[data-cut-theme="light"] .wo-summary-strip span,
+html[data-cut-theme="light"] .wo-payment-summary span,
+html[data-cut-theme="light"] .notifications-info span,
+html[data-cut-theme="light"] .appointment-main span,
+html[data-cut-theme="light"] .appointment-main small { color: #5e7084; }
+html[data-cut-theme="light"] .metric-label { color: #516479; }
+html[data-cut-theme="light"] .metric-note { color: #76879a; }
+/* Branded interactive controls. */
+html[data-cut-theme="light"] .primary-button,
+html[data-cut-theme="light"] .primary-inline-button,
+html[data-cut-theme="light"] .wo-status-action,
+html[data-cut-theme="light"] .global-search-submit,
+html[data-cut-theme="light"] .notifications-primary-button {
+  color: #182337; background: linear-gradient(110deg, #ffd073, #f2a42c);
+  border-color: #e2a13a; font-weight: 820;
+  box-shadow: 0 3px 12px rgb(215 140 24 / 12%);
+}
+html[data-cut-theme="light"] .primary-button:hover:not(:disabled),
+html[data-cut-theme="light"] .primary-inline-button:hover:not(:disabled),
+html[data-cut-theme="light"] .wo-status-action:hover:not(:disabled),
+html[data-cut-theme="light"] .global-search-submit:hover:not(:disabled) {
+  background: linear-gradient(110deg,#ffdc92,#f6b84e); border-color:#e3a334;
+}
+html[data-cut-theme="light"] .search-button,
+html[data-cut-theme="light"] .user-menu,
+html[data-cut-theme="light"] .secondary-button,
+html[data-cut-theme="light"] .refresh-button,
+html[data-cut-theme="light"] .settings-secondary,
+html[data-cut-theme="light"] .wo-secondary-action,
+html[data-cut-theme="light"] .wo-refresh,
+html[data-cut-theme="light"] .wo-add-button,
+html[data-cut-theme="light"] .wo-print-button,
+html[data-cut-theme="light"] .notifications-secondary-button,
+html[data-cut-theme="light"] .reports-refresh-button,
+html[data-cut-theme="light"] .notification-edit-button,
+html[data-cut-theme="light"] .icon-action,
+html[data-cut-theme="light"] .settings-top-button,
+html[data-cut-theme="light"] .settings-close,
+html[data-cut-theme="light"] .wo-icon-button,
+html[data-cut-theme="light"] .notification-icon-button,
+html[data-cut-theme="light"] .global-search-close,
+html[data-cut-theme="light"] .date-filter input {
+  background: #fff; color: #34465a; border-color: #d5dee9;
+}
+html[data-cut-theme="light"] .search-button:hover,
+html[data-cut-theme="light"] .secondary-button:hover,
+html[data-cut-theme="light"] .refresh-button:hover,
+html[data-cut-theme="light"] .wo-secondary-action:hover,
+html[data-cut-theme="light"] .wo-add-button:hover,
+html[data-cut-theme="light"] .reports-refresh-button:hover,
+html[data-cut-theme="light"] .notification-edit-button:hover,
+html[data-cut-theme="light"] .icon-action:hover { background: #fff7e8; color: #865605; border-color: #e5c384; }
+html[data-cut-theme="light"] .user-chip { background: #1b2f47; color: #ffd27a; }
+html[data-cut-theme="light"] .auth-logo,
+html[data-cut-theme="light"] .login-logo { background: #14263c; color: #ffc452; }
+html[data-cut-theme="light"] .user-info strong { color: #1b2a3d; }
+html[data-cut-theme="light"] .user-info span,
+html[data-cut-theme="light"] .logout-button { color: #66798d; }
+html[data-cut-theme="light"] .logout-button:hover { background: #f2f5fa; color: #1c2a3d; }
+/* Tables and functional inner cards. */
+html[data-cut-theme="light"] .data-row,
+html[data-cut-theme="light"] .wo-order-card,
+html[data-cut-theme="light"] .appointment-card,
+html[data-cut-theme="light"] .order-summary-item,
+html[data-cut-theme="light"] .vehicle-now-row,
+html[data-cut-theme="light"] .detail-grid > div,
+html[data-cut-theme="light"] .empty-state,
+html[data-cut-theme="light"] .notifications-filters,
+html[data-cut-theme="light"] .notifications-summary > div,
+html[data-cut-theme="light"] .reminder-due > div,
+html[data-cut-theme="light"] .notification-toggle,
+html[data-cut-theme="light"] .notification-preference-client > div,
+html[data-cut-theme="light"] .wo-overview > div,
+html[data-cut-theme="light"] .wo-summary-strip > div,
+html[data-cut-theme="light"] .wo-payment-summary > div,
+html[data-cut-theme="light"] .settings-access-fields,
+html[data-cut-theme="light"] .employee-access-details > div,
+html[data-cut-theme="light"] .report-source-grid article,
+html[data-cut-theme="light"] .report-finance-breakdown article,
+html[data-cut-theme="light"] .work-participation-toggle,
+html[data-cut-theme="light"] .report-employee-footer,
+html[data-cut-theme="light"] .report-table th,
+html[data-cut-theme="light"] .wo-assignment-block,
+html[data-cut-theme="light"] .wo-performers > div,
+html[data-cut-theme="light"] .settings-account-note,
+html[data-cut-theme="light"] .settings-hint,
+html[data-cut-theme="light"] .employee-filter > span,
+html[data-cut-theme="light"] .dashboard-day-switch,
+html[data-cut-theme="light"] .wo-tabs,
+html[data-cut-theme="light"] .wo-inline-form,
+html[data-cut-theme="light"] .wo-editor,
+html[data-cut-theme="light"] .wo-photo-area,
+html[data-cut-theme="light"] .wo-payment-row,
+html[data-cut-theme="light"] .wo-item-card,
+html[data-cut-theme="light"] .wo-dispute-card,
+html[data-cut-theme="light"] .wo-list-heading strong,
+html[data-cut-theme="light"] .vehicle-now-heading span { background: #f5f7fb; border-color: #e3e9f0; color: #263649; }
+html[data-cut-theme="light"] .data-row:hover,
+html[data-cut-theme="light"] .wo-order-card:hover,
+html[data-cut-theme="light"] .appointment-card:hover,
+html[data-cut-theme="light"] .global-search-result:hover,
+html[data-cut-theme="light"] .settings-tab:hover,
+html[data-cut-theme="light"] .notifications-tab:hover,
+html[data-cut-theme="light"] .reports-tab:hover,
+html[data-cut-theme="light"] .employee-filter:hover,
+html[data-cut-theme="light"] .wo-filter:hover { background: #fff2dc; color: #1e2e44; }
+html[data-cut-theme="light"] .data-row-active,
+html[data-cut-theme="light"] .wo-order-card-active { background: #fff4df; border-color: #ddaa53; }
+html[data-cut-theme="light"] .settings-tab,
+html[data-cut-theme="light"] .notifications-tab,
+html[data-cut-theme="light"] .reports-tab,
+html[data-cut-theme="light"] .employee-filter,
+html[data-cut-theme="light"] .wo-filter,
+html[data-cut-theme="light"] .dashboard-day-button,
+html[data-cut-theme="light"] .wo-tab { color: #5c6e81; }
+html[data-cut-theme="light"] .settings-tab-active,
+html[data-cut-theme="light"] .employee-filter-active,
+html[data-cut-theme="light"] .wo-filter-active,
+html[data-cut-theme="light"] .notifications-tab-active,
+html[data-cut-theme="light"] .reports-tab-active,
+html[data-cut-theme="light"] .dashboard-day-button-active {
+  color: #835309; background: #fff2d8; border-color: #edcc8d;
+}
+html[data-cut-theme="light"] .wo-tab-active { color: #895304; border-bottom-color: #e9a128; }
+html[data-cut-theme="light"] .wo-tabs { border-top-color: #e1e7ed; border-bottom-color: #e1e7ed; }
+html[data-cut-theme="light"] .wo-list-heading,
+html[data-cut-theme="light"] .wo-section-heading,
+html[data-cut-theme="light"] .report-section-heading,
+html[data-cut-theme="light"] .report-employee-card > summary,
+html[data-cut-theme="light"] .notification-card-actions,
+html[data-cut-theme="light"] .wo-financial-line,
+html[data-cut-theme="light"] .appointment-row,
+html[data-cut-theme="light"] .report-table td,
+html[data-cut-theme="light"] .report-table th { border-color: #e2e8f0; }
+html[data-cut-theme="light"] .wo-order-client,
+html[data-cut-theme="light"] .wo-item-main strong,
+html[data-cut-theme="light"] .appointment-card-main strong,
+html[data-cut-theme="light"] .wo-overview strong,
+html[data-cut-theme="light"] .wo-summary-strip strong,
+html[data-cut-theme="light"] .wo-payment-summary strong,
+html[data-cut-theme="light"] .notification-card-top strong,
+html[data-cut-theme="light"] .report-employee-card > summary strong,
+html[data-cut-theme="light"] .appointment-time,
+html[data-cut-theme="light"] .appointment-card-time { color: #19283a; }
+html[data-cut-theme="light"] .notification-card,
+html[data-cut-theme="light"] .reminder-card,
+html[data-cut-theme="light"] .global-search-result,
+html[data-cut-theme="light"] .wo-photo-item > button:first-child { background: #fff; border-color: #e2e8f0; color: #1c2d41; }
+html[data-cut-theme="light"] .global-search-result-title strong,
+html[data-cut-theme="light"] .report-table td > strong,
+html[data-cut-theme="light"] .global-search-start strong,
+html[data-cut-theme="light"] .global-search-empty strong { color: #203247; }
+/* Text legibility and focus, especially within dense work-order screens. */
+html[data-cut-theme="light"] .search-field,
+html[data-cut-theme="light"] .global-search-input-wrap,
+html[data-cut-theme="light"] .login-form input,
+html[data-cut-theme="light"] .form-grid input,
+html[data-cut-theme="light"] .form-grid select,
+html[data-cut-theme="light"] .form-grid textarea,
+html[data-cut-theme="light"] .single-field select,
+html[data-cut-theme="light"] .settings-form-grid input,
+html[data-cut-theme="light"] .settings-access-fields input,
+html[data-cut-theme="light"] .settings-access-fields select,
+html[data-cut-theme="light"] .wo-inline-form input,
+html[data-cut-theme="light"] .wo-inline-form textarea,
+html[data-cut-theme="light"] .wo-form-grid input,
+html[data-cut-theme="light"] .wo-form-grid textarea,
+html[data-cut-theme="light"] .wo-form-grid select,
+html[data-cut-theme="light"] .wo-assignment-row input,
+html[data-cut-theme="light"] .wo-assignment-row select,
+html[data-cut-theme="light"] .notification-form-grid input,
+html[data-cut-theme="light"] .notification-form-grid textarea,
+html[data-cut-theme="light"] .notification-form-grid select,
+html[data-cut-theme="light"] .notification-client-selector select,
+html[data-cut-theme="light"] .notifications-filters select,
+html[data-cut-theme="light"] .reports-period-controls input,
+html[data-cut-theme="light"] .work-participation-rate input,
+html[data-cut-theme="light"] .global-search-input-wrap input {
+  color: #1a2c40; background: #fff; border-color: #cdd8e4;
+}
+html[data-cut-theme="light"] input::placeholder,
+html[data-cut-theme="light"] textarea::placeholder { color: #7b8b9d; opacity: 1; }
+html[data-cut-theme="light"] select option { color: #17273a; background: #fff; }
+html[data-cut-theme="light"] .search-field:focus-within,
+html[data-cut-theme="light"] .global-search-input-wrap:focus-within,
+html[data-cut-theme="light"] .login-form input:focus,
+html[data-cut-theme="light"] .form-grid input:focus,
+html[data-cut-theme="light"] .form-grid textarea:focus,
+html[data-cut-theme="light"] .form-grid select:focus,
+html[data-cut-theme="light"] .notification-form-grid input:focus,
+html[data-cut-theme="light"] .wo-form-grid input:focus,
+html[data-cut-theme="light"] .settings-form-grid input:focus {
+  border-color: #d99721; box-shadow: 0 0 0 3px var(--cut-focus);
+}
+html[data-cut-theme="light"] button:focus-visible,
+html[data-cut-theme="light"] a:focus-visible,
+html[data-cut-theme="light"] select:focus-visible,
+html[data-cut-theme="light"] input:focus-visible,
+html[data-cut-theme="light"] textarea:focus-visible { outline: 2px solid #ce8a1c; outline-offset: 2px; }
+html[data-cut-theme="light"] a { color: #a5630b; }
+/* Meaningful statuses are not recolored as decorative gold. */
+html[data-cut-theme="light"] .login-error,
+html[data-cut-theme="light"] .dashboard-error,
+html[data-cut-theme="light"] .form-error,
+html[data-cut-theme="light"] .notifications-error,
+html[data-cut-theme="light"] .reports-error,
+html[data-cut-theme="light"] .wo-error,
+html[data-cut-theme="light"] .notification-error-text,
+html[data-cut-theme="light"] .settings-error { background: #fff0f0; color: #9b3131; border-color: #f0cdcd; }
+html[data-cut-theme="light"] .settings-success,
+html[data-cut-theme="light"] .notifications-success,
+html[data-cut-theme="light"] .ready-row,
+html[data-cut-theme="light"] .attention-calm { background: #eaf7ee; color: #21663f; border-color: #bde5ca; }
+html[data-cut-theme="light"] .wo-summary-debt,
+html[data-cut-theme="light"] .wo-payment-debt,
+html[data-cut-theme="light"] .attention-item-warning,
+html[data-cut-theme="light"] .report-metric-debt { background: #fff0e8 !important; color: #944129; }
+html[data-cut-theme="light"] .wo-summary-debt strong,
+html[data-cut-theme="light"] .wo-payment-debt strong,
+html[data-cut-theme="light"] .vehicle-now-debt { color: #b04837 !important; }
+/* Keep modals, galleries and PDFs legible. */
+html[data-cut-theme="light"] .auth-page { color: #19283a; background: radial-gradient(ellipse at 25% 5%,#fff0d2,transparent 55%),#f3f6fa; }
+html[data-cut-theme="light"] .auth-loading strong,
+html[data-cut-theme="light"] .login-heading h1,
+html[data-cut-theme="light"] .login-brand-name { color: #19293d; }
+html[data-cut-theme="light"] .login-heading p,
+html[data-cut-theme="light"] .login-brand-note,
+html[data-cut-theme="light"] .login-heading > span,
+html[data-cut-theme="light"] .auth-loading,
+html[data-cut-theme="light"] .login-form label > span { color: #5a6b80; }
+html[data-cut-theme="light"] .wo-modal-backdrop,
+html[data-cut-theme="light"] .notification-modal-backdrop,
+html[data-cut-theme="light"] .modal-backdrop,
+html[data-cut-theme="light"] .global-search-overlay { background: rgb(8 18 31 / 60%); }
+html[data-cut-theme="light"] .wo-modal,
+html[data-cut-theme="light"] .notification-modal,
+html[data-cut-theme="light"] .modal-card,
+html[data-cut-theme="light"] .global-search-window { background: #fff; color: #1a2c40; }
+html[data-cut-theme="light"] .global-search-group-heading > span,
+html[data-cut-theme="light"] .count-badge { color: #945d0b; background: #fff0d1; }
+html[data-cut-theme="light"] .wo-pdf-window { border-color: #d0d8e2; }
+html[data-cut-theme="light"] .wo-pdf-toolbar,
+html[data-cut-theme="light"] .wo-pdf-switcher { background: #fff; color: #203249; border-color: #dbe3eb; }
+html[data-cut-theme="light"] .wo-pdf-action,
+html[data-cut-theme="light"] .wo-pdf-type-active { color: #27384c; background: #f5f7fb; border-color: #d8e0ea; }
+html[data-cut-theme="light"] .wo-pdf-viewer { background: #e7edf3; }
+html[data-cut-theme="light"] .wo-pdf-viewer iframe { background: #fff; }
+/* The global theme switch stays accessible on login, dashboard, and other screens. */
+.cut-theme-switcher {
+  position: fixed; z-index: 80; right: 18px; bottom: 16px;
+  display: flex; align-items: center; gap: 3px;
+  padding: 5px; border: 1px solid #3b5169; border-radius: 999px;
+  background: #13283e; color: #e5effa;
+  box-shadow: 0 9px 29px rgb(0 0 0 / 22%);
+  font-family: Inter,system-ui,sans-serif;
+}
+.cut-theme-switcher button {
+  min-height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 0 12px; border: 1px solid transparent;
+  border-radius: 999px; background: transparent; color: inherit;
+  cursor: pointer; font-size: 12px; font-weight: 750; line-height: 1;
+}
+.cut-theme-switcher button:hover { background: rgb(255 255 255 / 10%); }
+.cut-theme-switcher button[aria-pressed="true"] {
+  border-color: #ffc665; background: linear-gradient(110deg,#ffce65,#f1a12a);
+  color: #142033; box-shadow: 0 2px 10px rgb(240 151 30 / 20%);
+}
+.cut-theme-switcher button:focus-visible { outline: 2px solid #f7b335; outline-offset: 2px; }
+html[data-cut-theme="light"] .cut-theme-switcher {
+  background: #fff; color: #35475c; border-color: #d6e0ea;
+  box-shadow: 0 8px 25px rgb(21 41 67 / 13%);
+}
+html[data-cut-theme="light"] .cut-theme-switcher button:hover { background: #fff4df; }
+html[data-cut-theme="light"] .cut-theme-switcher button[aria-pressed="true"] { color: #182338; }
+@media (max-width: 760px) {
+  html[data-cut-theme="light"] .brand { flex-direction: row; align-items: center; gap: 10px; padding: 3px 8px 13px; }
+  html[data-cut-theme="light"] .brand-mark { flex: 0 0 115px; width: 115px; height: 47px; }
+  html[data-cut-theme="light"] .brand-name::before { font-size: 15px; }
+  html[data-cut-theme="light"] .main-content { padding-top: 18px; }
+}
+@media (max-width: 520px) {
+  html[data-cut-theme="light"] .brand-mark { flex-basis: 92px; width: 92px; height: 40px; }
+  html[data-cut-theme="light"] .brand-name::before { font-size: 13px; }
+  html[data-cut-theme="light"] .welcome-panel { background-image: linear-gradient(110deg,#fffefb,#fff5e3); }
+  .cut-theme-switcher { right: 8px; bottom: 8px; padding: 4px; }
+  .cut-theme-switcher button { min-height: 32px; padding: 0 9px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .cut-theme-switcher button { transition: none; } }
